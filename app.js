@@ -1,7 +1,5 @@
 let allOrders = [];
 let filteredOrders = [];
-let currentPage = 1;
-const ordersPerPage = 25;
 
 async function fetchAllOrders() {
     const loadingEl = document.getElementById('loading');
@@ -128,11 +126,7 @@ function displayOrders() {
         return;
     }
     
-    const startIndex = (currentPage - 1) * ordersPerPage;
-    const endIndex = Math.min(startIndex + ordersPerPage, filteredOrders.length);
-    const pageOrders = filteredOrders.slice(startIndex, endIndex);
-    
-    pageOrders.forEach(order => {
+    filteredOrders.forEach(order => {
         const row = document.createElement('tr');
         
         let productInfo = '-';
@@ -172,16 +166,6 @@ function displayOrders() {
         
         tbody.appendChild(row);
     });
-    
-    updatePagination();
-}
-
-function updatePagination() {
-    const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
-    
-    document.getElementById('pageInfo').textContent = `Pagina ${currentPage} van ${totalPages}`;
-    document.getElementById('prevPage').disabled = currentPage === 1;
-    document.getElementById('nextPage').disabled = currentPage >= totalPages;
 }
 
 function filterOrders() {
@@ -218,7 +202,6 @@ function filterOrders() {
         return matchesSearch && matchesProduct;
     });
     
-    currentPage = 1;
     updateStatistics();
     displayOrders();
 }
@@ -243,20 +226,5 @@ function showError(message) {
 
 document.getElementById('searchInput').addEventListener('input', filterOrders);
 document.getElementById('productFilter').addEventListener('change', filterOrders);
-
-document.getElementById('prevPage').addEventListener('click', () => {
-    if (currentPage > 1) {
-        currentPage--;
-        displayOrders();
-    }
-});
-
-document.getElementById('nextPage').addEventListener('click', () => {
-    const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
-    if (currentPage < totalPages) {
-        currentPage++;
-        displayOrders();
-    }
-});
 
 fetchAllOrders();
