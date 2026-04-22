@@ -22,21 +22,17 @@
                 <div class="stat-value" id="totalRevenue">€0</div>
                 <div class="stat-label">Totale Omzet</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value" id="avgOrder">€0</div>
-                <div class="stat-label">Gemiddeld Bedrag</div>
-            </div>
         </div>
 
         <div class="filters">
-            <input type="text" id="searchInput" placeholder="Zoek op bestelnummer, naam, telefoon, email of product...">
+            <input type="text" id="searchInput" placeholder="Zoek op bestelnummer, naam, telefoon, email of evenement...">
             <select id="statusFilter">
                 <option value="">Alle Statussen</option>
                 <option value="Paid">Betaald</option>
                 <option value="Succeeded">Succesvol</option>
             </select>
             <select id="productFilter">
-                <option value="">Alle Producten</option>
+                <option value="">Alle Evenementen</option>
             </select>
         </div>
 
@@ -50,12 +46,11 @@
                         <th>Datum</th>
                         <th>Naam</th>
                         <th>Telefoon</th>
-                        <th>Product</th>
+                        <th>Evenement</th>
                         <th>Aantal</th>
                         <th>Bedrag</th>
                         <th>E-mail</th>
                         <th>Betaalmethode</th>
-                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody id="ordersBody">
@@ -63,11 +58,6 @@
             </table>
         </div>
 
-        <div class="pagination">
-            <button id="prevPage" disabled>Vorige</button>
-            <span id="pageInfo">Pagina 1</span>
-            <button id="nextPage">Volgende</button>
-        </div>
     </div>
 
     <script src="app.js"></script>

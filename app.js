@@ -124,7 +124,7 @@ function displayOrders() {
     tbody.innerHTML = '';
     
     if (filteredOrders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="no-data">Geen bestellingen gevonden</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="no-data">Geen bestellingen gevonden</td></tr>';
         return;
     }
     
@@ -152,11 +152,10 @@ function displayOrders() {
         const lastName = customer.lastName || '';
         const fullName = `${firstName} ${lastName}`.trim() || '-';
         const phone = customer.phone || '-';
+        const email = customer.email || '-';
         
         const paymentMethod = order.payment?.method || order.data?.paymentMethod || '-';
         const price = order.payment?.price || 0;
-        const status = order.status || 'Pending';
-        const iban = order.payment?.iban || '-';
         const orderDate = order.payment?.paidAt || order.createdAt;
         
         row.innerHTML = `
@@ -167,9 +166,8 @@ function displayOrders() {
             <td>${productInfo}</td>
             <td>${quantity}</td>
             <td>${formatCurrency(price)}</td>
+            <td>${email}</td>
             <td>${paymentMethod}</td>
-            <td>${getStatusBadge(status)}</td>
-            <td>${iban}</td>
         `;
         
         tbody.appendChild(row);
@@ -204,11 +202,13 @@ function filterOrders() {
             const customer = order.data?.customer || {};
             const fullName = `${customer.firstName || ''} ${customer.lastName || ''}`.toLowerCase();
             const phone = customer.phone?.toLowerCase() || '';
+            const email = customer.email?.toLowerCase() || '';
             
             matchesSearch = orderNumber.includes(searchTerm) || 
                            products.includes(searchTerm) ||
                            fullName.includes(searchTerm) ||
-                           phone.includes(searchTerm);
+                           phone.includes(searchTerm) ||
+                           email.includes(searchTerm);
         }
         
         if (statusFilter) {

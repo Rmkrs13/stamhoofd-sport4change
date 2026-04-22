@@ -40,7 +40,7 @@ header h2 {
 
 .stats-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     padding: 30px;
     background: #f8f9fa;
