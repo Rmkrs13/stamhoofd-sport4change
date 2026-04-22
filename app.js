@@ -152,7 +152,7 @@ function displayOrders() {
         console.log('Displaying', filteredOrders.length, 'orders');
         
         if (filteredOrders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="no-data">Geen bestellingen gevonden</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="no-data">Geen bestellingen gevonden</td></tr>';
             console.log('No orders to display');
             return;
         }
@@ -180,7 +180,6 @@ function displayOrders() {
         const phone = customer.phone || '-';
         const email = customer.email || '-';
         
-        const paymentMethod = order.payment?.method || order.data?.paymentMethod || '-';
         const price = order.payment?.price || 0;
         const orderDate = order.payment?.paidAt || order.createdAt;
         
@@ -193,7 +192,6 @@ function displayOrders() {
             <td>${quantity}</td>
             <td>${formatCurrency(price)}</td>
             <td>${email}</td>
-            <td>${paymentMethod}</td>
         `;
         
                 tbody.appendChild(row);
