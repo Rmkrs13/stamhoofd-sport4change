@@ -3,83 +3,24 @@ let filteredOrders = [];
 let currentPage = 1;
 const ordersPerPage = 25;
 
-const API_BASE_URL = 'https://5dd7e0c3-b8c7-404c-a83d-4a1e67b77dca.api.stamhoofd.app/v247';
-const WEBSHOP_ID = 'b25b18dc-b803-430f-b68b-d2822df19524';
-const CREDENTIALS = {
-    username: 'lars.raeymaekers@thomasmore.be',
-    password: 'sectret-here'
-};
-
-async function getAuthToken() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/oauth/token`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                grant_type: 'password',
-                username: CREDENTIALS.username,
-                password: CREDENTIALS.password
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Authentication failed: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.access_token;
-    } catch (error) {
-        console.error('Authentication error:', error);
-        showError('Authenticatie mislukt. Controleer de inloggegevens.');
-        throw error;
-    }
-}
-
 async function fetchAllOrders() {
     const loadingEl = document.getElementById('loading');
     loadingEl.style.display = 'block';
     
     try {
-        const token = await getAuthToken();
-        let allFetchedOrders = [];
-        let hasMore = true;
-        let afterNumber = null;
-        let updatedSince = null;
+        const response = await fetch('/api/orders');
         
-        while (hasMore) {
-            const url = new URL(`${API_BASE_URL}/webshop/${WEBSHOP_ID}/orders`);
-            if (afterNumber !== null) {
-                url.searchParams.append('afterNumber', afterNumber);
-            }
-            if (updatedSince !== null) {
-                url.searchParams.append('updatedSince', updatedSince);
-            }
-            
-            const response = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch orders: ${response.status}`);
+        }
 
-            if (!response.ok) {
-                throw new Error(`Failed to fetch orders: ${response.status}`);
-            }
-
-            const data = await response.json();
-            allFetchedOrders = allFetchedOrders.concat(data.results || []);
-            
-            if (data.next) {
-                afterNumber = data.next.afterNumber;
-                updatedSince = data.next.updatedSince;
-            } else {
-                hasMore = false;
-            }
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
         }
         
-        allOrders = allFetchedOrders;
+        allOrders = data.orders || [];
         filteredOrders = [...allOrders];
         
         populateProductFilter();
