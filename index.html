@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sport 4 Change - Bestellingen Overzicht</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sport 4 Change</h1>
+            <h2>Bestellingen Overzicht</h2>
+        </header>
+        
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-value" id="totalOrders">0</div>
+                <div class="stat-label">Totaal Bestellingen</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalRevenue">€0</div>
+                <div class="stat-label">Totale Omzet</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgOrder">€0</div>
+                <div class="stat-label">Gemiddeld Bedrag</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <input type="text" id="searchInput" placeholder="Zoek op bestelnummer of product...">
+            <select id="statusFilter">
+                <option value="">Alle Statussen</option>
+                <option value="Paid">Betaald</option>
+                <option value="Succeeded">Succesvol</option>
+                <option value="Deleted">Verwijderd</option>
+            </select>
+            <select id="productFilter">
+                <option value="">Alle Producten</option>
+            </select>
+        </div>
+
+        <div class="loading" id="loading">Bestellingen laden...</div>
+        
+        <div class="table-container">
+            <table id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>Bestelnummer</th>
+                        <th>Datum</th>
+                        <th>Product</th>
+                        <th>Aantal</th>
+                        <th>Bedrag</th>
+                        <th>Betaalmethode</th>
+                        <th>Status</th>
+                        <th>IBAN</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination">
+            <button id="prevPage" disabled>Vorige</button>
+            <span id="pageInfo">Pagina 1</span>
+            <button id="nextPage">Volgende</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
