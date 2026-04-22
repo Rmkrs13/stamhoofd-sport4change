@@ -29,12 +29,11 @@
         </div>
 
         <div class="filters">
-            <input type="text" id="searchInput" placeholder="Zoek op bestelnummer, naam, telefoon of product...">
+            <input type="text" id="searchInput" placeholder="Zoek op bestelnummer, naam, telefoon, email of product...">
             <select id="statusFilter">
                 <option value="">Alle Statussen</option>
                 <option value="Paid">Betaald</option>
                 <option value="Succeeded">Succesvol</option>
-                <option value="Deleted">Verwijderd</option>
             </select>
             <select id="productFilter">
                 <option value="">Alle Producten</option>
@@ -54,9 +53,9 @@
                         <th>Product</th>
                         <th>Aantal</th>
                         <th>Bedrag</th>
+                        <th>E-mail</th>
                         <th>Betaalmethode</th>
                         <th>Status</th>
-                        <th>IBAN</th>
                     </tr>
                 </thead>
                 <tbody id="ordersBody">

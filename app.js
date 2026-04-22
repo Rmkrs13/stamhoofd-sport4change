@@ -20,7 +20,14 @@ async function fetchAllOrders() {
             throw new Error(data.error);
         }
         
-        allOrders = data.orders || [];
+        // Filter out deleted orders and sort by date (newest first)
+        allOrders = (data.orders || [])
+            .filter(order => order.status !== 'Deleted')
+            .sort((a, b) => {
+                const dateA = new Date(a.payment?.paidAt || a.createdAt || 0);
+                const dateB = new Date(b.payment?.paidAt || b.createdAt || 0);
+                return dateB - dateA; // Sort descending (newest first)
+            });
         filteredOrders = [...allOrders];
         
         populateProductFilter();
@@ -117,7 +124,7 @@ function displayOrders() {
     tbody.innerHTML = '';
     
     if (filteredOrders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="no-data">Geen bestellingen gevonden</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="no-data">Geen bestellingen gevonden</td></tr>';
         return;
     }
     
