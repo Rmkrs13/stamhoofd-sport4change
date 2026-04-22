@@ -186,12 +186,10 @@ function updatePagination() {
 
 function filterOrders() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const statusFilter = document.getElementById('statusFilter').value;
     const productFilter = document.getElementById('productFilter').value;
     
     filteredOrders = allOrders.filter(order => {
         let matchesSearch = true;
-        let matchesStatus = true;
         let matchesProduct = true;
         
         if (searchTerm) {
@@ -211,17 +209,13 @@ function filterOrders() {
                            email.includes(searchTerm);
         }
         
-        if (statusFilter) {
-            matchesStatus = order.status === statusFilter;
-        }
-        
         if (productFilter) {
             matchesProduct = order.data?.cart?.items?.some(item => 
                 item.product?.name === productFilter
             ) || false;
         }
         
-        return matchesSearch && matchesStatus && matchesProduct;
+        return matchesSearch && matchesProduct;
     });
     
     currentPage = 1;
@@ -248,7 +242,6 @@ function showError(message) {
 }
 
 document.getElementById('searchInput').addEventListener('input', filterOrders);
-document.getElementById('statusFilter').addEventListener('change', filterOrders);
 document.getElementById('productFilter').addEventListener('change', filterOrders);
 
 document.getElementById('prevPage').addEventListener('click', () => {
