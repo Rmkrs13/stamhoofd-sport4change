@@ -117,7 +117,7 @@ function displayOrders() {
     tbody.innerHTML = '';
     
     if (filteredOrders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="no-data">Geen bestellingen gevonden</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="no-data">Geen bestellingen gevonden</td></tr>';
         return;
     }
     
@@ -139,6 +139,13 @@ function displayOrders() {
             productInfo = products.join(', ');
         }
         
+        // Extract customer info
+        const customer = order.data?.customer || {};
+        const firstName = customer.firstName || '';
+        const lastName = customer.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim() || '-';
+        const phone = customer.phone || '-';
+        
         const paymentMethod = order.payment?.method || order.data?.paymentMethod || '-';
         const price = order.payment?.price || 0;
         const status = order.status || 'Pending';
@@ -148,6 +155,8 @@ function displayOrders() {
         row.innerHTML = `
             <td>#${order.number || '-'}</td>
             <td>${formatDate(orderDate)}</td>
+            <td>${fullName}</td>
+            <td>${phone}</td>
             <td>${productInfo}</td>
             <td>${quantity}</td>
             <td>${formatCurrency(price)}</td>
@@ -185,9 +194,14 @@ function filterOrders() {
             const products = order.data?.cart?.items?.map(item => 
                 item.product?.name?.toLowerCase() || ''
             ).join(' ') || '';
+            const customer = order.data?.customer || {};
+            const fullName = `${customer.firstName || ''} ${customer.lastName || ''}`.toLowerCase();
+            const phone = customer.phone?.toLowerCase() || '';
             
             matchesSearch = orderNumber.includes(searchTerm) || 
-                           products.includes(searchTerm);
+                           products.includes(searchTerm) ||
+                           fullName.includes(searchTerm) ||
+                           phone.includes(searchTerm);
         }
         
         if (statusFilter) {

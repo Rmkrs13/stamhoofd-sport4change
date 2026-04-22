@@ -12,7 +12,7 @@ body {
 }
 
 .container {
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
     background: white;
     border-radius: 16px;
@@ -151,6 +151,15 @@ td {
     padding: 15px;
     color: #444;
     font-size: 0.95em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+td:nth-child(3), /* Name column */
+td:nth-child(5) { /* Product column */
+    max-width: 250px;
 }
 
 .status-badge {
