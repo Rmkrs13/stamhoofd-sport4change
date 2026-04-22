@@ -5,20 +5,29 @@ async function fetchAllOrders() {
     const loadingEl = document.getElementById('loading');
     loadingEl.style.display = 'block';
     
+    console.log('Starting to fetch orders...');
+    
     try {
         const response = await fetch('/api/orders');
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
         
         if (!response.ok) {
+            console.error('Response not OK:', response.status, response.statusText);
             throw new Error(`Failed to fetch orders: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log('Data received:', data);
+        console.log('Number of orders received:', data.orders?.length || 0);
         
         if (data.error) {
+            console.error('API returned error:', data.error);
             throw new Error(data.error);
         }
         
         // Filter out deleted orders and sort by date (newest first)
+        const beforeFilter = data.orders?.length || 0;
         allOrders = (data.orders || [])
             .filter(order => order.status !== 'Deleted')
             .sort((a, b) => {
@@ -26,14 +35,21 @@ async function fetchAllOrders() {
                 const dateB = new Date(b.payment?.paidAt || b.createdAt || 0);
                 return dateB - dateA; // Sort descending (newest first)
             });
+        
+        console.log(`Filtered ${beforeFilter - allOrders.length} deleted orders`);
+        console.log('Total orders after filtering:', allOrders.length);
+        
         filteredOrders = [...allOrders];
         
         populateProductFilter();
         updateStatistics();
         displayOrders();
         
+        console.log('Orders loaded and displayed successfully');
+        
     } catch (error) {
         console.error('Error fetching orders:', error);
+        console.error('Error stack:', error.stack);
         showError('Er is een fout opgetreden bij het ophalen van de bestellingen.');
     } finally {
         loadingEl.style.display = 'none';
@@ -41,41 +57,52 @@ async function fetchAllOrders() {
 }
 
 function populateProductFilter() {
-    const productSet = new Set();
-    
-    allOrders.forEach(order => {
-        if (order.data && order.data.cart && order.data.cart.items) {
-            order.data.cart.items.forEach(item => {
-                if (item.product && item.product.name) {
-                    productSet.add(item.product.name);
-                }
-            });
-        }
-    });
-    
-    const productFilter = document.getElementById('productFilter');
-    productFilter.innerHTML = '<option value="">Alle Producten</option>';
-    
-    Array.from(productSet).sort().forEach(product => {
-        const option = document.createElement('option');
-        option.value = product;
-        option.textContent = product;
-        productFilter.appendChild(option);
-    });
+    try {
+        const productSet = new Set();
+        
+        allOrders.forEach(order => {
+            if (order.data && order.data.cart && order.data.cart.items) {
+                order.data.cart.items.forEach(item => {
+                    if (item.product && item.product.name) {
+                        productSet.add(item.product.name);
+                    }
+                });
+            }
+        });
+        
+        console.log('Unique products found:', Array.from(productSet));
+        
+        const productFilter = document.getElementById('productFilter');
+        productFilter.innerHTML = '<option value="">Alle Evenementen</option>';
+        
+        Array.from(productSet).sort().forEach(product => {
+            const option = document.createElement('option');
+            option.value = product;
+            option.textContent = product;
+            productFilter.appendChild(option);
+        });
+        
+        console.log('Product filter populated with', productSet.size, 'products');
+    } catch (error) {
+        console.error('Error populating product filter:', error);
+    }
 }
 
 function updateStatistics() {
-    const totalOrders = filteredOrders.length;
-    const totalRevenue = filteredOrders.reduce((sum, order) => {
-        const price = order.payment?.price || 0;
-        return sum + price;
-    }, 0);
-    
-    const avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-    
-    document.getElementById('totalOrders').textContent = totalOrders.toLocaleString('nl-NL');
-    document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
-    document.getElementById('avgOrder').textContent = formatCurrency(avgOrder);
+    try {
+        const totalOrders = filteredOrders.length;
+        const totalRevenue = filteredOrders.reduce((sum, order) => {
+            const price = order.payment?.price || 0;
+            return sum + price;
+        }, 0);
+        
+        document.getElementById('totalOrders').textContent = totalOrders.toLocaleString('nl-NL');
+        document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+        
+        console.log('Statistics updated - Orders:', totalOrders, 'Revenue:', formatCurrency(totalRevenue));
+    } catch (error) {
+        console.error('Error updating statistics:', error);
+    }
 }
 
 function formatCurrency(cents) {
@@ -118,15 +145,20 @@ function getStatusBadge(status) {
 }
 
 function displayOrders() {
-    const tbody = document.getElementById('ordersBody');
-    tbody.innerHTML = '';
-    
-    if (filteredOrders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="no-data">Geen bestellingen gevonden</td></tr>';
-        return;
-    }
-    
-    filteredOrders.forEach(order => {
+    try {
+        const tbody = document.getElementById('ordersBody');
+        tbody.innerHTML = '';
+        
+        console.log('Displaying', filteredOrders.length, 'orders');
+        
+        if (filteredOrders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="no-data">Geen bestellingen gevonden</td></tr>';
+            console.log('No orders to display');
+            return;
+        }
+        
+        filteredOrders.forEach((order, index) => {
+            try {
         const row = document.createElement('tr');
         
         let productInfo = '-';
@@ -164,15 +196,28 @@ function displayOrders() {
             <td>${paymentMethod}</td>
         `;
         
-        tbody.appendChild(row);
-    });
+                tbody.appendChild(row);
+            } catch (orderError) {
+                console.error(`Error processing order ${index}:`, order, orderError);
+            }
+        });
+        
+        console.log('Orders display completed');
+    } catch (error) {
+        console.error('Error displaying orders:', error);
+    }
 }
 
 function filterOrders() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const productFilter = document.getElementById('productFilter').value;
-    
-    filteredOrders = allOrders.filter(order => {
+    try {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const productFilter = document.getElementById('productFilter').value;
+        
+        console.log('Filtering with search:', searchTerm, 'product:', productFilter);
+        
+        const beforeCount = filteredOrders.length;
+        
+        filteredOrders = allOrders.filter(order => {
         let matchesSearch = true;
         let matchesProduct = true;
         
@@ -202,11 +247,18 @@ function filterOrders() {
         return matchesSearch && matchesProduct;
     });
     
-    updateStatistics();
-    displayOrders();
+        console.log(`Filtered from ${beforeCount} to ${filteredOrders.length} orders`);
+        
+        updateStatistics();
+        displayOrders();
+    } catch (error) {
+        console.error('Error filtering orders:', error);
+    }
 }
 
 function showError(message) {
+    console.error('Showing error message:', message);
+    
     const container = document.querySelector('.container');
     const errorEl = document.createElement('div');
     errorEl.className = 'error-message';
@@ -224,7 +276,15 @@ function showError(message) {
     }, 5000);
 }
 
-document.getElementById('searchInput').addEventListener('input', filterOrders);
-document.getElementById('productFilter').addEventListener('change', filterOrders);
+// Add event listeners with error handling
+try {
+    document.getElementById('searchInput').addEventListener('input', filterOrders);
+    document.getElementById('productFilter').addEventListener('change', filterOrders);
+    console.log('Event listeners attached successfully');
+} catch (error) {
+    console.error('Error attaching event listeners:', error);
+}
 
+// Start fetching orders
+console.log('App initialized, fetching orders...');
 fetchAllOrders();
