@@ -184,14 +184,13 @@ function displayOrders() {
         const orderDate = order.payment?.paidAt || order.createdAt;
         
         row.innerHTML = `
-            <td>#${order.number || '-'}</td>
             <td>${formatDate(orderDate)}</td>
-            <td>${fullName}</td>
-            <td>${phone}</td>
             <td>${productInfo}</td>
+            <td>${fullName}</td>
             <td>${quantity}</td>
             <td>${formatCurrency(price)}</td>
             <td>${email}</td>
+            <td>${phone}</td>
         `;
         
                 tbody.appendChild(row);
