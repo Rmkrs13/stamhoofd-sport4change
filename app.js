@@ -220,7 +220,6 @@ function filterOrders() {
         let matchesProduct = true;
         
         if (searchTerm) {
-            const orderNumber = order.number?.toString() || '';
             const products = order.data?.cart?.items?.map(item => 
                 item.product?.name?.toLowerCase() || ''
             ).join(' ') || '';
@@ -229,8 +228,7 @@ function filterOrders() {
             const phone = customer.phone?.toLowerCase() || '';
             const email = customer.email?.toLowerCase() || '';
             
-            matchesSearch = orderNumber.includes(searchTerm) || 
-                           products.includes(searchTerm) ||
+            matchesSearch = products.includes(searchTerm) ||
                            fullName.includes(searchTerm) ||
                            phone.includes(searchTerm) ||
                            email.includes(searchTerm);
