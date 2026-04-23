@@ -22,6 +22,9 @@ header {
     color: #333;
     padding: 20px;
     border-bottom: 1px solid #ddd;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .header-content {
@@ -61,6 +64,9 @@ header h2 {
     padding: 20px;
     background: white;
     border-bottom: 1px solid #ddd;
+    position: sticky;
+    top: 121px; /* Height of header */
+    z-index: 90;
 }
 
 .stat-card {
@@ -91,6 +97,9 @@ header h2 {
     flex-wrap: wrap;
     background: white;
     border-bottom: 1px solid #ddd;
+    position: sticky;
+    top: 222px; /* Height of header + stats */
+    z-index: 80;
 }
 
 .search-wrapper {
@@ -181,8 +190,7 @@ header h2 {
 
 .table-container {
     overflow-x: auto;
-    padding: 0 20px;
-    max-height: calc(100vh - 300px);
+    padding: 20px;
     overflow-y: auto;
     position: relative;
 }
@@ -196,8 +204,8 @@ table {
 thead {
     background: white;
     position: sticky;
-    top: 0;
-    z-index: 10;
+    top: 310px; /* Below header + stats + filters */
+    z-index: 70;
     box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
 }
 
@@ -256,16 +264,66 @@ td a:hover {
         border-radius: 0;
     }
     
+    header {
+        padding: 15px 10px;
+        top: 0;
+    }
+    
+    .header-content {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .logo {
+        width: 50px;
+        height: 50px;
+        margin-right: 10px;
+    }
+    
+    .header-text {
+        flex: 1;
+        text-align: left;
+    }
+    
     header h1 {
-        font-size: 1.8em;
+        font-size: 1.3em;
+        margin-bottom: 5px;
+    }
+    
+    header h2 {
+        font-size: 0.9em;
+    }
+    
+    .logout-btn {
+        position: static;
+        margin-left: auto;
+        padding: 6px 12px;
+        font-size: 12px;
     }
     
     .stats-container {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 15px 10px;
+        top: 85px; /* Adjusted for mobile header height */
+    }
+    
+    .stat-card {
+        padding: 10px;
+    }
+    
+    .stat-value {
+        font-size: 1.2em;
+    }
+    
+    .stat-label {
+        font-size: 0.75em;
     }
     
     .filters {
         flex-direction: column;
+        padding: 15px 10px;
+        top: 170px; /* Adjusted for mobile header + stats height */
     }
     
     .filters input,
@@ -275,6 +333,10 @@ td a:hover {
     
     table {
         font-size: 0.85em;
+    }
+    
+    thead {
+        top: 280px; /* Adjusted for mobile sticky sections */
     }
     
     th, td {
