@@ -1,5 +1,6 @@
 let allOrders = [];
 let filteredOrders = [];
+let uniqueFields = new Map(); // Map to store unique field names and their display names
 
 async function fetchAllOrders() {
     const loadingEl = document.getElementById('loading');
@@ -39,10 +40,15 @@ async function fetchAllOrders() {
         console.log(`Filtered ${beforeFilter - allOrders.length} deleted orders`);
         console.log('Total orders after filtering:', allOrders.length);
         
+        // Extract all unique field names
+        extractUniqueFields();
+        
         filteredOrders = [...allOrders];
         
         populateProductFilter();
         updateStatistics();
+        // Rebuild table headers with dynamic fields
+        buildTableHeaders();
         displayOrders();
         
         console.log('Orders loaded and displayed successfully');
@@ -54,6 +60,61 @@ async function fetchAllOrders() {
     } finally {
         loadingEl.style.display = 'none';
     }
+}
+
+// Extract all unique field names from all orders
+function extractUniqueFields() {
+    uniqueFields.clear();
+    
+    allOrders.forEach(order => {
+        // Check order-level field answers
+        if (order.data?.fieldAnswers) {
+            Object.keys(order.data.fieldAnswers).forEach(fieldKey => {
+                if (!uniqueFields.has(fieldKey)) {
+                    // Try to get a display name from the field structure
+                    uniqueFields.set(fieldKey, fieldKey);
+                }
+            });
+        }
+        
+        // Check item-level field answers
+        if (order.data?.cart?.items) {
+            order.data.cart.items.forEach(item => {
+                if (item.fieldAnswers) {
+                    Object.keys(item.fieldAnswers).forEach(fieldKey => {
+                        if (!uniqueFields.has(fieldKey)) {
+                            uniqueFields.set(fieldKey, fieldKey);
+                        }
+                    });
+                }
+            });
+        }
+    });
+    
+    console.log('Unique fields found:', Array.from(uniqueFields.keys()));
+}
+
+// Build table headers dynamically
+function buildTableHeaders() {
+    const thead = document.querySelector('#ordersTable thead tr');
+    
+    // Clear existing headers
+    thead.innerHTML = '';
+    
+    // Add static columns
+    const staticHeaders = ['Datum', 'Evenement', 'Naam', 'Aantal', 'Bedrag', 'E-mail', 'Telefoon'];
+    staticHeaders.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        thead.appendChild(th);
+    });
+    
+    // Add dynamic field columns
+    uniqueFields.forEach((displayName, fieldKey) => {
+        const th = document.createElement('th');
+        th.textContent = displayName;
+        thead.appendChild(th);
+    });
 }
 
 function populateProductFilter() {
@@ -152,7 +213,8 @@ function displayOrders() {
         console.log('Displaying', filteredOrders.length, 'orders');
         
         if (filteredOrders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="no-data">Geen bestellingen gevonden</td></tr>';
+            const colspan = 7 + uniqueFields.size; // Static columns + dynamic field columns
+            tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data">Geen bestellingen gevonden</td></tr>`;
             console.log('No orders to display');
             return;
         }
@@ -180,9 +242,6 @@ function displayOrders() {
         const phone = customer.phone || '-';
         const email = customer.email || '-';
         
-        // Extract extra info from field answers
-        let extraInfo = [];
-        
         // Helper function to extract value from field answer
         const extractValue = (value) => {
             if (!value) return null;
@@ -205,12 +264,20 @@ function displayOrders() {
             return null;
         };
         
+        // Collect field values for this order
+        const fieldValues = new Map();
+        
+        // Initialize all fields with '-'
+        uniqueFields.forEach((displayName, fieldKey) => {
+            fieldValues.set(fieldKey, '-');
+        });
+        
         // Check for field answers at order level
         if (order.data?.fieldAnswers) {
             for (const [key, value] of Object.entries(order.data.fieldAnswers)) {
                 const extracted = extractValue(value);
                 if (extracted) {
-                    extraInfo.push(extracted);
+                    fieldValues.set(key, extracted);
                 }
             }
         }
@@ -222,14 +289,18 @@ function displayOrders() {
                     for (const [key, value] of Object.entries(item.fieldAnswers)) {
                         const extracted = extractValue(value);
                         if (extracted) {
-                            extraInfo.push(extracted);
+                            // If multiple items have the same field, concatenate values
+                            const existing = fieldValues.get(key);
+                            if (existing && existing !== '-') {
+                                fieldValues.set(key, `${existing}, ${extracted}`);
+                            } else {
+                                fieldValues.set(key, extracted);
+                            }
                         }
                     }
                 }
             });
         }
-        
-        const extraInfoText = extraInfo.length > 0 ? extraInfo.join(', ') : '-';
         
         const price = order.payment?.price || 0;
         const orderDate = order.payment?.paidAt || order.createdAt;
@@ -241,7 +312,8 @@ function displayOrders() {
         const cleanPhone = phone.replace(/[^\d+]/g, '');
         const phoneLink = phone !== '-' && cleanPhone ? `<a href="tel:${cleanPhone}">${phone}</a>` : phone;
         
-        row.innerHTML = `
+        // Build row HTML with static columns first
+        let rowHTML = `
             <td>${formatDate(orderDate)}</td>
             <td>${productInfo}</td>
             <td>${fullName}</td>
@@ -249,8 +321,15 @@ function displayOrders() {
             <td>${formatCurrency(price)}</td>
             <td>${emailLink}</td>
             <td>${phoneLink}</td>
-            <td title="${extraInfoText.replace(/"/g, '&quot;')}">${extraInfoText}</td>
         `;
+        
+        // Add dynamic field columns in the same order as headers
+        uniqueFields.forEach((displayName, fieldKey) => {
+            const value = fieldValues.get(fieldKey) || '-';
+            rowHTML += `<td title="${value.replace(/"/g, '&quot;')}">${value}</td>`;
+        });
+        
+        row.innerHTML = rowHTML;
         
                 tbody.appendChild(row);
             } catch (orderError) {
@@ -304,6 +383,7 @@ function filterOrders() {
         console.log(`Filtered from ${beforeCount} to ${filteredOrders.length} orders`);
         
         updateStatistics();
+        buildTableHeaders(); // Rebuild headers in case fields change
         displayOrders();
     } catch (error) {
         console.error('Error filtering orders:', error);
@@ -334,8 +414,15 @@ function exportToExcel() {
     try {
         console.log('Starting Excel export...');
         
-        // Create CSV content
-        let csvContent = 'Datum,Evenement,Naam,Aantal,Bedrag,E-mail,Telefoon,Extra Info\n';
+        // Create CSV header with static columns
+        let headers = ['Datum', 'Evenement', 'Naam', 'Aantal', 'Bedrag', 'E-mail', 'Telefoon'];
+        
+        // Add dynamic field columns
+        uniqueFields.forEach((displayName, fieldKey) => {
+            headers.push(displayName);
+        });
+        
+        let csvContent = headers.join(',') + '\n';
         
         filteredOrders.forEach(order => {
             // Extract data
@@ -357,9 +444,7 @@ function exportToExcel() {
             const phone = customer.phone || '-';
             const email = customer.email || '-';
             
-            // Extract extra info using same helper function
-            let extraInfo = [];
-            
+            // Helper function to extract value from field answer
             const extractValue = (value) => {
                 if (!value) return null;
                 if (typeof value === 'string') return value;
@@ -378,11 +463,20 @@ function exportToExcel() {
                 return null;
             };
             
+            // Collect field values for this order
+            const fieldValues = new Map();
+            
+            // Initialize all fields with '-'
+            uniqueFields.forEach((displayName, fieldKey) => {
+                fieldValues.set(fieldKey, '-');
+            });
+            
+            // Extract field values
             if (order.data?.fieldAnswers) {
                 for (const [key, value] of Object.entries(order.data.fieldAnswers)) {
                     const extracted = extractValue(value);
                     if (extracted) {
-                        extraInfo.push(extracted);
+                        fieldValues.set(key, extracted);
                     }
                 }
             }
@@ -392,13 +486,17 @@ function exportToExcel() {
                         for (const [key, value] of Object.entries(item.fieldAnswers)) {
                             const extracted = extractValue(value);
                             if (extracted) {
-                                extraInfo.push(extracted);
+                                const existing = fieldValues.get(key);
+                                if (existing && existing !== '-') {
+                                    fieldValues.set(key, `${existing}, ${extracted}`);
+                                } else {
+                                    fieldValues.set(key, extracted);
+                                }
                             }
                         }
                     }
                 });
             }
-            const extraInfoText = extraInfo.length > 0 ? extraInfo.join(', ') : '-';
             
             const price = order.payment?.price || 0;
             const orderDate = order.payment?.paidAt || order.createdAt;
@@ -407,19 +505,24 @@ function exportToExcel() {
             const date = orderDate ? new Date(orderDate).toLocaleString('nl-NL') : '-';
             const amount = formatCurrency(price);
             
-            // Escape special characters and add to CSV
-            const row = [
+            // Build CSV row with static columns
+            const rowData = [
                 date,
                 `"${productInfo.replace(/"/g, '""')}"`,
                 `"${fullName.replace(/"/g, '""')}"`,
                 quantity,
                 amount,
                 email,
-                phone,
-                `"${extraInfoText.replace(/"/g, '""')}"`
-            ].join(',');
+                phone
+            ];
             
-            csvContent += row + '\n';
+            // Add dynamic field values
+            uniqueFields.forEach((displayName, fieldKey) => {
+                const value = fieldValues.get(fieldKey) || '-';
+                rowData.push(`"${value.replace(/"/g, '""')}"`);
+            });
+            
+            csvContent += rowData.join(',') + '\n';
         });
         
         // Create blob with BOM for Excel to recognize UTF-8
