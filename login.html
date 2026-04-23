@@ -129,6 +129,16 @@
     </div>
 
     <script>
+        // Simple hash function for session token
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password + 'sport4change-salt');
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+        
         // Password toggle functionality
         const togglePassword = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('passwordInput');
@@ -141,15 +151,20 @@
         
         // Check if already logged in
         const sessionToken = localStorage.getItem('sessionToken');
-        if (sessionToken) {
+        const authPassword = localStorage.getItem('authPassword');
+        if (sessionToken && authPassword) {
             // Verify token is still valid
             fetch('/api/orders', {
                 headers: {
-                    'Authorization': sessionToken
+                    'Authorization': authPassword
                 }
             }).then(response => {
                 if (response.ok) {
                     window.location.href = '/';
+                } else {
+                    // Clear invalid session
+                    localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('authPassword');
                 }
             }).catch(() => {
                 // Ignore errors during check
@@ -172,8 +187,10 @@
                 });
                 
                 if (response.ok) {
-                    // Save session token (password) in localStorage
-                    localStorage.setItem('sessionToken', password);
+                    // Hash the password and save both the hash and actual password
+                    const hashedToken = await hashPassword(password);
+                    localStorage.setItem('sessionToken', hashedToken);
+                    localStorage.setItem('authPassword', password);
                     window.location.href = '/';
                 } else if (response.status === 401) {
                     errorEl.style.display = 'block';

@@ -5,9 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sport4Change - Ticketverkoop</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Hide everything until auth is verified */
+        body { display: none; }
+        .auth-checking {
+            display: flex !important;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: white;
+        }
+        .auth-checking .loading-text {
+            color: #666;
+            font-size: 1.1em;
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
+<body class="auth-checking">
+    <div class="loading-text">Authenticatie controleren...</div>
+    <div class="container" style="display: none;">
         <header>
             <div class="header-content">
                 <img src="Sticker_TMSport.svg" alt="Sport4Change Logo" class="logo">

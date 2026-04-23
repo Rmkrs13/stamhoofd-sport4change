@@ -2,97 +2,100 @@ let allOrders = [];
 let filteredOrders = [];
 let uniqueFields = new Map(); // Map to store unique field names and their display names
 
-// Check authentication on page load
-function checkAuth() {
+// Check authentication and show content
+async function verifyAuthAndInit() {
     const sessionToken = localStorage.getItem('sessionToken');
-    if (!sessionToken) {
+    const authPassword = localStorage.getItem('authPassword');
+    
+    if (!sessionToken || !authPassword) {
         window.location.href = '/login';
-        return false;
+        return;
     }
-    return true;
-}
-
-async function fetchAllOrders() {
-    if (!checkAuth()) return;
     
-    const loadingEl = document.getElementById('loading');
-    loadingEl.style.display = 'block';
-    
-    console.log('Starting to fetch orders...');
-    
-    const sessionToken = localStorage.getItem('sessionToken');
-    
+    // Verify with a quick API call
     try {
         const response = await fetch('/api/orders', {
             headers: {
-                'Authorization': sessionToken
+                'Authorization': authPassword
             }
         });
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
         
         if (!response.ok) {
-            console.error('Response not OK:', response.status, response.statusText);
             if (response.status === 401) {
-                // Unauthorized - clear session and redirect to login
                 localStorage.removeItem('sessionToken');
+                localStorage.removeItem('authPassword');
                 window.location.href = '/login';
                 return;
             }
-            throw new Error(`Failed to fetch orders: ${response.status}`);
         }
-
+        
+        // Authentication successful, show the app
+        document.body.classList.remove('auth-checking');
+        document.body.style.display = 'block';
+        document.querySelector('.loading-text').style.display = 'none';
+        document.querySelector('.container').style.display = 'block';
+        
+        // Now load the data
         const data = await response.json();
-        console.log('Data received:', data);
-        console.log('Number of orders received:', data.orders?.length || 0);
-        
-        if (data.error) {
-            console.error('API returned error:', data.error);
-            throw new Error(data.error);
-        }
-        
-        // Filter out deleted orders and sort by date (newest first)
-        const beforeFilter = data.orders?.length || 0;
-        allOrders = (data.orders || [])
-            .filter(order => order.status !== 'Deleted')
-            .sort((a, b) => {
-                const dateA = new Date(a.payment?.paidAt || a.createdAt || 0);
-                const dateB = new Date(b.payment?.paidAt || b.createdAt || 0);
-                return dateB - dateA; // Sort descending (newest first)
-            });
-        
-        console.log(`Filtered ${beforeFilter - allOrders.length} deleted orders`);
-        console.log('Total orders after filtering:', allOrders.length);
-        
-        // Extract all unique field names
-        extractUniqueFields();
-        
-        filteredOrders = [...allOrders];
-        
-        populateProductFilter();
-        
-        // Apply saved filter after populating the dropdown
-        const savedFilter = localStorage.getItem('selectedEvent');
-        if (savedFilter) {
-            // Trigger filtering with the saved value
-            filterOrders();
-        } else {
-            updateStatistics();
-            // Rebuild table headers with dynamic fields
-            buildTableHeaders();
-            displayOrders();
-        }
-        
-        console.log('Orders loaded and displayed successfully');
+        processOrderData(data);
         
     } catch (error) {
-        console.error('Error fetching orders:', error);
-        console.error('Error stack:', error.stack);
-        showError('Er is een fout opgetreden bij het ophalen van de bestellingen.');
-    } finally {
-        loadingEl.style.display = 'none';
+        console.error('Auth check error:', error);
+        localStorage.removeItem('sessionToken');
+        localStorage.removeItem('authPassword');
+        window.location.href = '/login';
     }
 }
+
+function processOrderData(data) {
+    console.log('Data received:', data);
+    console.log('Number of orders received:', data.orders?.length || 0);
+    
+    if (data.error) {
+        console.error('API returned error:', data.error);
+        showError('Er is een fout opgetreden bij het ophalen van de bestellingen.');
+        return;
+    }
+    
+    // Filter out deleted orders and sort by date (newest first)
+    const beforeFilter = data.orders?.length || 0;
+    allOrders = (data.orders || [])
+        .filter(order => order.status !== 'Deleted')
+        .sort((a, b) => {
+            const dateA = new Date(a.payment?.paidAt || a.createdAt || 0);
+            const dateB = new Date(b.payment?.paidAt || b.createdAt || 0);
+            return dateB - dateA; // Sort descending (newest first)
+        });
+    
+    console.log(`Filtered ${beforeFilter - allOrders.length} deleted orders`);
+    console.log('Total orders after filtering:', allOrders.length);
+    
+    // Extract all unique field names
+    extractUniqueFields();
+    
+    filteredOrders = [...allOrders];
+    
+    populateProductFilter();
+    
+    // Apply saved filter after populating the dropdown
+    const savedFilter = localStorage.getItem('selectedEvent');
+    if (savedFilter) {
+        // Trigger filtering with the saved value
+        filterOrders();
+    } else {
+        updateStatistics();
+        // Rebuild table headers with dynamic fields
+        buildTableHeaders();
+        displayOrders();
+    }
+    
+    console.log('Orders loaded and displayed successfully');
+    
+    // Hide loading
+    const loadingEl = document.getElementById('loading');
+    loadingEl.style.display = 'none';
+}
+
 
 // Extract all unique field names from all orders
 function extractUniqueFields() {
@@ -657,6 +660,7 @@ try {
     document.getElementById('exportBtn').addEventListener('click', exportToExcel);
     document.getElementById('logoutBtn').addEventListener('click', () => {
         localStorage.removeItem('sessionToken');
+        localStorage.removeItem('authPassword');
         localStorage.removeItem('selectedEvent');
         window.location.href = '/login';
     });
@@ -665,6 +669,6 @@ try {
     console.error('Error attaching event listeners:', error);
 }
 
-// Start fetching orders
-console.log('App initialized, fetching orders...');
-fetchAllOrders();
+// Start authentication check and initialization
+console.log('App initialized, checking authentication...');
+verifyAuthAndInit();
