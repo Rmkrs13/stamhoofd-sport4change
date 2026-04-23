@@ -92,6 +92,12 @@ header h2 {
     border-bottom: 1px solid #ddd;
 }
 
+.search-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+}
+
 .filters input,
 .filters select {
     flex: 1;
@@ -101,10 +107,37 @@ header h2 {
     font-size: 14px;
 }
 
+.filters input {
+    width: 100%;
+    padding-right: 35px;
+}
+
 .filters input:focus,
 .filters select:focus {
     outline: none;
     border-color: #999;
+}
+
+.clear-search {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #999;
+    cursor: pointer;
+    padding: 5px 10px;
+    display: none;
+}
+
+.clear-search:hover {
+    color: #333;
+}
+
+.search-wrapper.has-text .clear-search {
+    display: block;
 }
 
 .export-btn {

@@ -30,7 +30,10 @@
         </div>
 
         <div class="filters">
-            <input type="text" id="searchInput" placeholder="Zoek op naam, telefoon, email of evenement...">
+            <div class="search-wrapper">
+                <input type="text" id="searchInput" placeholder="Zoek op naam, telefoon, email of evenement...">
+                <button id="clearSearch" class="clear-search" aria-label="Clear search">×</button>
+            </div>
             <select id="productFilter">
                 <option value="">Alle Evenementen</option>
             </select>

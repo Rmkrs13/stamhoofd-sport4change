@@ -353,9 +353,35 @@ function exportToExcel() {
     }
 }
 
+// Function to handle search input changes
+function handleSearchInput() {
+    const searchInput = document.getElementById('searchInput');
+    const searchWrapper = searchInput.parentElement;
+    
+    if (searchInput.value) {
+        searchWrapper.classList.add('has-text');
+    } else {
+        searchWrapper.classList.remove('has-text');
+    }
+    
+    filterOrders();
+}
+
+// Function to clear search
+function clearSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const searchWrapper = searchInput.parentElement;
+    
+    searchInput.value = '';
+    searchWrapper.classList.remove('has-text');
+    filterOrders();
+    searchInput.focus();
+}
+
 // Add event listeners with error handling
 try {
-    document.getElementById('searchInput').addEventListener('input', filterOrders);
+    document.getElementById('searchInput').addEventListener('input', handleSearchInput);
+    document.getElementById('clearSearch').addEventListener('click', clearSearch);
     document.getElementById('productFilter').addEventListener('change', filterOrders);
     document.getElementById('exportBtn').addEventListener('click', exportToExcel);
     console.log('Event listeners attached successfully');
