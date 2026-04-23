@@ -92,8 +92,13 @@
             cursor: pointer;
         }
         
-        .login-btn:hover {
+        .login-btn:hover:not(:disabled) {
             background: #e5531f;
+        }
+        
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         
         .error-message {
@@ -176,7 +181,13 @@
             
             const password = document.getElementById('passwordInput').value;
             const errorEl = document.getElementById('errorMessage');
+            const loginBtn = e.target.querySelector('.login-btn');
+            const originalText = loginBtn.textContent;
+            
+            // Hide error and show loading state
             errorEl.style.display = 'none';
+            loginBtn.textContent = 'Bezig...';
+            loginBtn.disabled = true;
             
             try {
                 // Try to authenticate
@@ -194,14 +205,20 @@
                     window.location.href = '/';
                 } else if (response.status === 401) {
                     errorEl.style.display = 'block';
+                    loginBtn.textContent = originalText;
+                    loginBtn.disabled = false;
                 } else {
                     errorEl.textContent = 'Server configuratie fout';
                     errorEl.style.display = 'block';
+                    loginBtn.textContent = originalText;
+                    loginBtn.disabled = false;
                 }
             } catch (error) {
                 console.error('Login error:', error);
                 errorEl.textContent = 'Geen verbinding met server';
                 errorEl.style.display = 'block';
+                loginBtn.textContent = originalText;
+                loginBtn.disabled = false;
             }
         });
     </script>

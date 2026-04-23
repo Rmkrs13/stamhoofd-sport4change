@@ -21,19 +21,20 @@ async function verifyAuthAndInit() {
         });
         
         if (!response.ok) {
-            if (response.status === 401) {
-                localStorage.removeItem('sessionToken');
-                localStorage.removeItem('authPassword');
-                window.location.href = '/login';
-                return;
-            }
+            console.error('Auth failed with status:', response.status);
+            localStorage.removeItem('sessionToken');
+            localStorage.removeItem('authPassword');
+            window.location.href = '/login';
+            return;
         }
         
         // Authentication successful, show the app
         document.body.classList.remove('auth-checking');
         document.body.style.display = 'block';
-        document.querySelector('.loading-text').style.display = 'none';
-        document.querySelector('.container').style.display = 'block';
+        const loadingText = document.querySelector('.loading-text');
+        if (loadingText) loadingText.style.display = 'none';
+        const container = document.querySelector('.container');
+        if (container) container.style.display = 'block';
         
         // Now load the data
         const data = await response.json();
