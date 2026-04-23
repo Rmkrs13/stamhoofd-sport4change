@@ -8,22 +8,10 @@
     <style>
         /* Hide everything until auth is verified */
         body { display: none; }
-        .auth-checking {
-            display: flex !important;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: white;
-        }
-        .auth-checking .loading-text {
-            color: #666;
-            font-size: 1.1em;
-        }
     </style>
 </head>
-<body class="auth-checking">
-    <div class="loading-text">Authenticatie controleren...</div>
-    <div class="container" style="display: none;">
+<body>
+    <div class="container">
         <header>
             <div class="header-content">
                 <img src="Sticker_TMSport.svg" alt="Sport4Change Logo" class="logo">

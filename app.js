@@ -12,7 +12,13 @@ async function verifyAuthAndInit() {
         return;
     }
     
-    // Verify with a quick API call
+    // Show the app immediately with loading state
+    document.body.style.display = 'block';
+    const loadingEl = document.getElementById('loading');
+    loadingEl.style.display = 'block';
+    loadingEl.textContent = 'Bestellingen laden...';
+    
+    // Verify with API call and load data
     try {
         const response = await fetch('/api/orders', {
             headers: {
@@ -28,15 +34,7 @@ async function verifyAuthAndInit() {
             return;
         }
         
-        // Authentication successful, show the app
-        document.body.classList.remove('auth-checking');
-        document.body.style.display = 'block';
-        const loadingText = document.querySelector('.loading-text');
-        if (loadingText) loadingText.style.display = 'none';
-        const container = document.querySelector('.container');
-        if (container) container.style.display = 'block';
-        
-        // Now load the data
+        // Process the data
         const data = await response.json();
         processOrderData(data);
         
