@@ -107,6 +107,20 @@ header h2 {
     border-color: #999;
 }
 
+.export-btn {
+    padding: 8px 20px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.export-btn:hover {
+    background: #45a049;
+}
+
 .loading {
     text-align: center;
     padding: 40px;

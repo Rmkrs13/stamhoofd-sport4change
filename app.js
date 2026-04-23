@@ -278,10 +278,86 @@ function showError(message) {
     }, 5000);
 }
 
+function exportToExcel() {
+    try {
+        console.log('Starting Excel export...');
+        
+        // Create CSV content
+        let csvContent = 'Datum,Evenement,Naam,Aantal,Bedrag,E-mail,Telefoon\n';
+        
+        filteredOrders.forEach(order => {
+            // Extract data
+            let productInfo = '-';
+            let quantity = 0;
+            
+            if (order.data && order.data.cart && order.data.cart.items) {
+                const products = order.data.cart.items.map(item => {
+                    quantity += item.amount || 0;
+                    return item.product?.name || 'Onbekend product';
+                });
+                productInfo = products.join(', ');
+            }
+            
+            const customer = order.data?.customer || {};
+            const firstName = customer.firstName || '';
+            const lastName = customer.lastName || '';
+            const fullName = `${firstName} ${lastName}`.trim() || '-';
+            const phone = customer.phone || '-';
+            const email = customer.email || '-';
+            const price = order.payment?.price || 0;
+            const orderDate = order.payment?.paidAt || order.createdAt;
+            
+            // Format date for Excel
+            const date = orderDate ? new Date(orderDate).toLocaleString('nl-NL') : '-';
+            const amount = formatCurrency(price);
+            
+            // Escape special characters and add to CSV
+            const row = [
+                date,
+                `"${productInfo.replace(/"/g, '""')}"`,
+                `"${fullName.replace(/"/g, '""')}"`,
+                quantity,
+                amount,
+                email,
+                phone
+            ].join(',');
+            
+            csvContent += row + '\n';
+        });
+        
+        // Create blob with BOM for Excel to recognize UTF-8
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+        
+        // Create download link
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        
+        // Generate filename with current date
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        link.setAttribute('download', `Sport4Change_Ticketverkoop_${dateStr}.csv`);
+        
+        // Trigger download
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log(`Exported ${filteredOrders.length} orders to Excel`);
+        
+    } catch (error) {
+        console.error('Error exporting to Excel:', error);
+        showError('Er is een fout opgetreden bij het exporteren naar Excel.');
+    }
+}
+
 // Add event listeners with error handling
 try {
     document.getElementById('searchInput').addEventListener('input', filterOrders);
     document.getElementById('productFilter').addEventListener('change', filterOrders);
+    document.getElementById('exportBtn').addEventListener('click', exportToExcel);
     console.log('Event listeners attached successfully');
 } catch (error) {
     console.error('Error attaching event listeners:', error);
