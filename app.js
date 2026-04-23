@@ -109,7 +109,7 @@ function buildTableHeaders() {
     thead.innerHTML = '';
     
     // Add static columns
-    const staticHeaders = ['Datum', 'Evenement', 'Naam', 'Bedrag', 'E-mail', 'Telefoon'];
+    const staticHeaders = ['Datum', 'Evenement', 'Bedrag', 'Naam', 'E-mail', 'Telefoon'];
     staticHeaders.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header;
@@ -331,12 +331,12 @@ function displayOrders() {
         const cleanPhone = phone.replace(/[^\d+]/g, '');
         const phoneLink = phone !== '-' && cleanPhone ? `<a href="tel:${cleanPhone}">${phone}</a>` : phone;
         
-        // Build row HTML with static columns first (removed quantity)
+        // Build row HTML with static columns first (bedrag as 3rd column)
         let rowHTML = `
             <td>${formatDate(orderDate)}</td>
             <td>${productInfo}</td>
-            <td>${fullName}</td>
             <td>${formatCurrency(price)}</td>
+            <td>${fullName}</td>
             <td>${emailLink}</td>
             <td>${phoneLink}</td>
         `;
@@ -432,8 +432,8 @@ function exportToExcel() {
     try {
         console.log('Starting Excel export...');
         
-        // Create CSV header with static columns (removed Aantal)
-        let headers = ['Datum', 'Evenement', 'Naam', 'Bedrag', 'E-mail', 'Telefoon'];
+        // Create CSV header with static columns (Bedrag as 3rd column)
+        let headers = ['Datum', 'Evenement', 'Bedrag', 'Naam', 'E-mail', 'Telefoon'];
         
         // Add dynamic field columns with their names
         uniqueFields.forEach((displayName, fieldName) => {
@@ -536,12 +536,12 @@ function exportToExcel() {
             const date = orderDate ? new Date(orderDate).toLocaleString('nl-NL') : '-';
             const amount = formatCurrency(price);
             
-            // Build CSV row with static columns - all fields need quotes (removed quantity)
+            // Build CSV row with static columns - all fields need quotes (Bedrag as 3rd column)
             const rowData = [
                 `"${date}"`,
                 `"${productInfo.replace(/"/g, '""')}"`,
-                `"${fullName.replace(/"/g, '""')}"`,
                 `"${amount}"`,
+                `"${fullName.replace(/"/g, '""')}"`,
                 `"${email}"`,
                 `"${phone}"`
             ];
