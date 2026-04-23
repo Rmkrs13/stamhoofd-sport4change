@@ -436,12 +436,12 @@ function exportToExcel() {
         // Create CSV header with static columns
         let headers = ['Datum', 'Evenement', 'Naam', 'Aantal', 'Bedrag', 'E-mail', 'Telefoon'];
         
-        // Add dynamic field columns
-        uniqueFields.forEach((displayName, fieldKey) => {
-            headers.push(displayName);
+        // Add dynamic field columns with their names
+        uniqueFields.forEach((displayName, fieldName) => {
+            headers.push(fieldName);
         });
         
-        let csvContent = headers.join(',') + '\n';
+        let csvContent = headers.map(h => `"${h}"`).join(',') + '\n';
         
         filteredOrders.forEach(order => {
             // Extract data
