@@ -19,6 +19,7 @@ Voor lokale ontwikkeling en productie moeten de volgende environment variables w
 
 - `STAMHOOFD_USERNAME`: Je Stamhoofd gebruikersnaam
 - `STAMHOOFD_PASSWORD`: Je Stamhoofd wachtwoord
+- `APP_PASSWORD`: Wachtwoord voor toegang tot het dashboard
 
 ### Lokaal ontwikkelen
 
@@ -55,12 +56,14 @@ De app draait nu op http://localhost:8888
 3. Voeg toe:
    - `STAMHOOFD_USERNAME`: lars.raeymaekers@thomasmore.be
    - `STAMHOOFD_PASSWORD`: [je wachtwoord]
+   - `APP_PASSWORD`: [dashboard toegangswachtwoord]
 
 #### Via Netlify CLI:
 
 ```bash
 netlify env:set STAMHOOFD_USERNAME lars.raeymaekers@thomasmore.be
 netlify env:set STAMHOOFD_PASSWORD your_password_here
+netlify env:set APP_PASSWORD your_app_password_here
 ```
 
 Na het instellen van de environment variables, deploy opnieuw:

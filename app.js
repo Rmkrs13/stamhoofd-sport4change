@@ -2,19 +2,43 @@ let allOrders = [];
 let filteredOrders = [];
 let uniqueFields = new Map(); // Map to store unique field names and their display names
 
+// Check authentication on page load
+function checkAuth() {
+    const sessionToken = localStorage.getItem('sessionToken');
+    if (!sessionToken) {
+        window.location.href = '/login.html';
+        return false;
+    }
+    return true;
+}
+
 async function fetchAllOrders() {
+    if (!checkAuth()) return;
+    
     const loadingEl = document.getElementById('loading');
     loadingEl.style.display = 'block';
     
     console.log('Starting to fetch orders...');
     
+    const sessionToken = localStorage.getItem('sessionToken');
+    
     try {
-        const response = await fetch('/api/orders');
+        const response = await fetch('/api/orders', {
+            headers: {
+                'Authorization': sessionToken
+            }
+        });
         console.log('Response status:', response.status);
         console.log('Response headers:', response.headers);
         
         if (!response.ok) {
             console.error('Response not OK:', response.status, response.statusText);
+            if (response.status === 401) {
+                // Unauthorized - clear session and redirect to login
+                localStorage.removeItem('sessionToken');
+                window.location.href = '/login.html';
+                return;
+            }
             throw new Error(`Failed to fetch orders: ${response.status}`);
         }
 
@@ -631,6 +655,11 @@ try {
     document.getElementById('clearSearch').addEventListener('click', clearSearch);
     document.getElementById('productFilter').addEventListener('change', filterOrders);
     document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('sessionToken');
+        localStorage.removeItem('selectedEvent');
+        window.location.href = '/login.html';
+    });
     console.log('Event listeners attached successfully');
 } catch (error) {
     console.error('Error attaching event listeners:', error);

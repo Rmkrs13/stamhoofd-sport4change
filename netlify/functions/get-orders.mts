@@ -72,7 +72,36 @@ export default async (req: Request, context: Context) => {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+      }
+    });
+  }
+
+  // Check for authentication
+  const authHeader = req.headers.get('Authorization');
+  const appPassword = Netlify.env.get('APP_PASSWORD');
+  
+  if (!appPassword) {
+    console.error('APP_PASSWORD environment variable not set');
+    return new Response(JSON.stringify({ 
+      error: 'Server configuration error' 
+    }), { 
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
+  
+  if (!authHeader || authHeader !== appPassword) {
+    return new Response(JSON.stringify({ 
+      error: 'Unauthorized' 
+    }), { 
+      status: 401,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
       }
     });
   }
