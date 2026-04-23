@@ -183,11 +183,34 @@ function displayOrders() {
         // Extract extra info from field answers
         let extraInfo = [];
         
+        // Helper function to extract value from field answer
+        const extractValue = (value) => {
+            if (!value) return null;
+            if (typeof value === 'string') return value;
+            if (typeof value === 'number' || typeof value === 'boolean') return value.toString();
+            if (value.value !== undefined) return extractValue(value.value);
+            if (value.text !== undefined) return value.text;
+            if (value.name !== undefined) return value.name;
+            if (Array.isArray(value)) {
+                return value.map(v => extractValue(v)).filter(v => v).join(', ');
+            }
+            if (typeof value === 'object') {
+                // Try common field names
+                if (value.answer) return extractValue(value.answer);
+                if (value.selected) return extractValue(value.selected);
+                if (value.choice) return extractValue(value.choice);
+                // Log the object to see its structure
+                console.log('Unknown field answer structure:', value);
+            }
+            return null;
+        };
+        
         // Check for field answers at order level
         if (order.data?.fieldAnswers) {
             for (const [key, value] of Object.entries(order.data.fieldAnswers)) {
-                if (value && value !== '') {
-                    extraInfo.push(value.toString());
+                const extracted = extractValue(value);
+                if (extracted) {
+                    extraInfo.push(extracted);
                 }
             }
         }
@@ -197,8 +220,9 @@ function displayOrders() {
             order.data.cart.items.forEach(item => {
                 if (item.fieldAnswers) {
                     for (const [key, value] of Object.entries(item.fieldAnswers)) {
-                        if (value && value !== '') {
-                            extraInfo.push(value.toString());
+                        const extracted = extractValue(value);
+                        if (extracted) {
+                            extraInfo.push(extracted);
                         }
                     }
                 }
@@ -333,12 +357,32 @@ function exportToExcel() {
             const phone = customer.phone || '-';
             const email = customer.email || '-';
             
-            // Extract extra info
+            // Extract extra info using same helper function
             let extraInfo = [];
+            
+            const extractValue = (value) => {
+                if (!value) return null;
+                if (typeof value === 'string') return value;
+                if (typeof value === 'number' || typeof value === 'boolean') return value.toString();
+                if (value.value !== undefined) return extractValue(value.value);
+                if (value.text !== undefined) return value.text;
+                if (value.name !== undefined) return value.name;
+                if (Array.isArray(value)) {
+                    return value.map(v => extractValue(v)).filter(v => v).join(', ');
+                }
+                if (typeof value === 'object') {
+                    if (value.answer) return extractValue(value.answer);
+                    if (value.selected) return extractValue(value.selected);
+                    if (value.choice) return extractValue(value.choice);
+                }
+                return null;
+            };
+            
             if (order.data?.fieldAnswers) {
                 for (const [key, value] of Object.entries(order.data.fieldAnswers)) {
-                    if (value && value !== '') {
-                        extraInfo.push(value.toString());
+                    const extracted = extractValue(value);
+                    if (extracted) {
+                        extraInfo.push(extracted);
                     }
                 }
             }
@@ -346,8 +390,9 @@ function exportToExcel() {
                 order.data.cart.items.forEach(item => {
                     if (item.fieldAnswers) {
                         for (const [key, value] of Object.entries(item.fieldAnswers)) {
-                            if (value && value !== '') {
-                                extraInfo.push(value.toString());
+                            const extracted = extractValue(value);
+                            if (extracted) {
+                                extraInfo.push(extracted);
                             }
                         }
                     }
