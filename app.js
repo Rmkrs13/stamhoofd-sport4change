@@ -537,15 +537,15 @@ function exportToExcel() {
             const date = orderDate ? new Date(orderDate).toLocaleString('nl-NL') : '-';
             const amount = formatCurrency(price);
             
-            // Build CSV row with static columns
+            // Build CSV row with static columns - all fields need quotes
             const rowData = [
-                date,
+                `"${date}"`,
                 `"${productInfo.replace(/"/g, '""')}"`,
                 `"${fullName.replace(/"/g, '""')}"`,
                 quantity,
-                amount,
-                email,
-                phone
+                `"${amount}"`,
+                `"${email}"`,
+                `"${phone}"`
             ];
             
             // Add dynamic field values
