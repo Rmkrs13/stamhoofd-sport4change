@@ -6,7 +6,7 @@ let uniqueFields = new Map(); // Map to store unique field names and their displ
 function checkAuth() {
     const sessionToken = localStorage.getItem('sessionToken');
     if (!sessionToken) {
-        window.location.href = '/login.html';
+        window.location.href = '/login';
         return false;
     }
     return true;
@@ -36,7 +36,7 @@ async function fetchAllOrders() {
             if (response.status === 401) {
                 // Unauthorized - clear session and redirect to login
                 localStorage.removeItem('sessionToken');
-                window.location.href = '/login.html';
+                window.location.href = '/login';
                 return;
             }
             throw new Error(`Failed to fetch orders: ${response.status}`);
@@ -658,7 +658,7 @@ try {
     document.getElementById('logoutBtn').addEventListener('click', () => {
         localStorage.removeItem('sessionToken');
         localStorage.removeItem('selectedEvent');
-        window.location.href = '/login.html';
+        window.location.href = '/login';
     });
     console.log('Event listeners attached successfully');
 } catch (error) {
