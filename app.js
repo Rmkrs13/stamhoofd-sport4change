@@ -183,14 +183,21 @@ function displayOrders() {
         const price = order.payment?.price || 0;
         const orderDate = order.payment?.paidAt || order.createdAt;
         
+        // Create clickable email link
+        const emailLink = email !== '-' ? `<a href="mailto:${email}">${email}</a>` : '-';
+        
+        // Create clickable phone link (remove spaces and special chars for tel: link)
+        const cleanPhone = phone.replace(/[^\d+]/g, '');
+        const phoneLink = phone !== '-' && cleanPhone ? `<a href="tel:${cleanPhone}">${phone}</a>` : phone;
+        
         row.innerHTML = `
             <td>${formatDate(orderDate)}</td>
             <td>${productInfo}</td>
             <td>${fullName}</td>
             <td>${quantity}</td>
             <td>${formatCurrency(price)}</td>
-            <td>${email}</td>
-            <td>${phone}</td>
+            <td>${emailLink}</td>
+            <td>${phoneLink}</td>
         `;
         
                 tbody.appendChild(row);
