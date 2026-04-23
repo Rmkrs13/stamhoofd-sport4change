@@ -56,7 +56,7 @@ async function fetchAllOrders() {
     } catch (error) {
         console.error('Error fetching orders:', error);
         console.error('Error stack:', error.stack);
-        showError('Er is een fout opgetreden bij het ophalen van de bestellingen.');
+        showError('Er is een fout opgetreden bij het ophalen van de tickets.');
     } finally {
         loadingEl.style.display = 'none';
     }
