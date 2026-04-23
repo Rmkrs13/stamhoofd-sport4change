@@ -189,23 +189,23 @@ header h2 {
 }
 
 .table-container {
-    overflow-x: auto;
-    padding: 20px;
-    overflow-y: auto;
+    overflow: auto;
+    padding: 0 20px 20px 20px;
     position: relative;
+    max-height: calc(100vh - 320px); /* Viewport height minus fixed sections */
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 20px 0;
+    margin-top: 0;
 }
 
 thead {
     background: white;
     position: sticky;
-    top: 310px; /* Below header + stats + filters */
-    z-index: 70;
+    top: 0;
+    z-index: 10;
     box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
 }
 
@@ -336,11 +336,16 @@ td a:hover {
     }
     
     thead {
-        top: 280px; /* Adjusted for mobile sticky sections */
+        top: 0; /* Sticky to table container top */
     }
     
     th, td {
         padding: 10px 5px;
+    }
+    
+    .table-container {
+        padding: 0 10px 10px 10px;
+        max-height: calc(100vh - 290px); /* Adjusted for mobile */
     }
 }
 
