@@ -109,7 +109,7 @@ function buildTableHeaders() {
     thead.innerHTML = '';
     
     // Add static columns
-    const staticHeaders = ['Datum', 'Evenement', 'Naam', 'Aantal', 'Bedrag', 'E-mail', 'Telefoon'];
+    const staticHeaders = ['Datum', 'Evenement', 'Naam', 'Bedrag', 'E-mail', 'Telefoon'];
     staticHeaders.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header;
@@ -220,7 +220,7 @@ function displayOrders() {
         console.log('Displaying', filteredOrders.length, 'orders');
         
         if (filteredOrders.length === 0) {
-            const colspan = 7 + uniqueFields.size; // Static columns + dynamic field columns
+            const colspan = 6 + uniqueFields.size; // Static columns + dynamic field columns (removed Aantal)
             tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data">Geen bestellingen gevonden</td></tr>`;
             console.log('No orders to display');
             return;
@@ -331,12 +331,11 @@ function displayOrders() {
         const cleanPhone = phone.replace(/[^\d+]/g, '');
         const phoneLink = phone !== '-' && cleanPhone ? `<a href="tel:${cleanPhone}">${phone}</a>` : phone;
         
-        // Build row HTML with static columns first
+        // Build row HTML with static columns first (removed quantity)
         let rowHTML = `
             <td>${formatDate(orderDate)}</td>
             <td>${productInfo}</td>
             <td>${fullName}</td>
-            <td>${quantity}</td>
             <td>${formatCurrency(price)}</td>
             <td>${emailLink}</td>
             <td>${phoneLink}</td>
@@ -433,8 +432,8 @@ function exportToExcel() {
     try {
         console.log('Starting Excel export...');
         
-        // Create CSV header with static columns
-        let headers = ['Datum', 'Evenement', 'Naam', 'Aantal', 'Bedrag', 'E-mail', 'Telefoon'];
+        // Create CSV header with static columns (removed Aantal)
+        let headers = ['Datum', 'Evenement', 'Naam', 'Bedrag', 'E-mail', 'Telefoon'];
         
         // Add dynamic field columns with their names
         uniqueFields.forEach((displayName, fieldName) => {
@@ -537,12 +536,11 @@ function exportToExcel() {
             const date = orderDate ? new Date(orderDate).toLocaleString('nl-NL') : '-';
             const amount = formatCurrency(price);
             
-            // Build CSV row with static columns - all fields need quotes
+            // Build CSV row with static columns - all fields need quotes (removed quantity)
             const rowData = [
                 `"${date}"`,
                 `"${productInfo.replace(/"/g, '""')}"`,
                 `"${fullName.replace(/"/g, '""')}"`,
-                quantity,
                 `"${amount}"`,
                 `"${email}"`,
                 `"${phone}"`
