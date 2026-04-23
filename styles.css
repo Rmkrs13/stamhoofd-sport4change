@@ -114,7 +114,7 @@ header h2 {
     min-width: 200px;
     padding: 8px 12px;
     border: 1px solid #ddd;
-    font-size: 14px;
+    font-size: 16px; /* Prevents zoom on iOS */
 }
 
 .filters input {
