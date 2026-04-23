@@ -1,6 +1,6 @@
-# Sport 4 Change - Stamhoofd Bestellingen Dashboard
+# Sport4Change - Stamhoofd Bestellingen Dashboard
 
-Een webapp voor het weergeven van alle bestellingen uit Stamhoofd voor Sport 4 Change.
+Een webapp voor het weergeven van alle bestellingen uit Stamhoofd voor Sport4Change.
 
 ## Features
 
