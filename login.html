@@ -191,11 +191,14 @@
             
             try {
                 // Try to authenticate
+                console.log('Attempting login...');
                 const response = await fetch('/api/orders', {
                     headers: {
                         'Authorization': password
                     }
                 });
+                
+                console.log('Response status:', response.status);
                 
                 if (response.ok) {
                     // Hash the password and save both the hash and actual password
@@ -204,11 +207,18 @@
                     localStorage.setItem('authPassword', password);
                     window.location.href = '/';
                 } else if (response.status === 401) {
+                    console.log('Authentication failed - wrong password');
+                    errorEl.style.display = 'block';
+                    loginBtn.textContent = originalText;
+                    loginBtn.disabled = false;
+                } else if (response.status === 500) {
+                    console.log('Server error - likely APP_PASSWORD not set');
+                    errorEl.textContent = 'Server configuratie fout - APP_PASSWORD niet ingesteld';
                     errorEl.style.display = 'block';
                     loginBtn.textContent = originalText;
                     loginBtn.disabled = false;
                 } else {
-                    errorEl.textContent = 'Server configuratie fout';
+                    errorEl.textContent = `Server fout: ${response.status}`;
                     errorEl.style.display = 'block';
                     loginBtn.textContent = originalText;
                     loginBtn.disabled = false;
