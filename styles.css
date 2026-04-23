@@ -206,6 +206,13 @@ td {
     font-size: 0.95em;
 }
 
+td:last-child {
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 td a {
     color: #0066cc;
     text-decoration: none;

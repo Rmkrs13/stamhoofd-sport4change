@@ -152,7 +152,7 @@ function displayOrders() {
         console.log('Displaying', filteredOrders.length, 'orders');
         
         if (filteredOrders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="no-data">Geen bestellingen gevonden</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="no-data">Geen bestellingen gevonden</td></tr>';
             console.log('No orders to display');
             return;
         }
@@ -180,6 +180,33 @@ function displayOrders() {
         const phone = customer.phone || '-';
         const email = customer.email || '-';
         
+        // Extract extra info from field answers
+        let extraInfo = [];
+        
+        // Check for field answers at order level
+        if (order.data?.fieldAnswers) {
+            for (const [key, value] of Object.entries(order.data.fieldAnswers)) {
+                if (value && value !== '') {
+                    extraInfo.push(value.toString());
+                }
+            }
+        }
+        
+        // Check for field answers in cart items
+        if (order.data?.cart?.items) {
+            order.data.cart.items.forEach(item => {
+                if (item.fieldAnswers) {
+                    for (const [key, value] of Object.entries(item.fieldAnswers)) {
+                        if (value && value !== '') {
+                            extraInfo.push(value.toString());
+                        }
+                    }
+                }
+            });
+        }
+        
+        const extraInfoText = extraInfo.length > 0 ? extraInfo.join(', ') : '-';
+        
         const price = order.payment?.price || 0;
         const orderDate = order.payment?.paidAt || order.createdAt;
         
@@ -198,6 +225,7 @@ function displayOrders() {
             <td>${formatCurrency(price)}</td>
             <td>${emailLink}</td>
             <td>${phoneLink}</td>
+            <td title="${extraInfoText.replace(/"/g, '&quot;')}">${extraInfoText}</td>
         `;
         
                 tbody.appendChild(row);
@@ -283,7 +311,7 @@ function exportToExcel() {
         console.log('Starting Excel export...');
         
         // Create CSV content
-        let csvContent = 'Datum,Evenement,Naam,Aantal,Bedrag,E-mail,Telefoon\n';
+        let csvContent = 'Datum,Evenement,Naam,Aantal,Bedrag,E-mail,Telefoon,Extra Info\n';
         
         filteredOrders.forEach(order => {
             // Extract data
@@ -304,6 +332,29 @@ function exportToExcel() {
             const fullName = `${firstName} ${lastName}`.trim() || '-';
             const phone = customer.phone || '-';
             const email = customer.email || '-';
+            
+            // Extract extra info
+            let extraInfo = [];
+            if (order.data?.fieldAnswers) {
+                for (const [key, value] of Object.entries(order.data.fieldAnswers)) {
+                    if (value && value !== '') {
+                        extraInfo.push(value.toString());
+                    }
+                }
+            }
+            if (order.data?.cart?.items) {
+                order.data.cart.items.forEach(item => {
+                    if (item.fieldAnswers) {
+                        for (const [key, value] of Object.entries(item.fieldAnswers)) {
+                            if (value && value !== '') {
+                                extraInfo.push(value.toString());
+                            }
+                        }
+                    }
+                });
+            }
+            const extraInfoText = extraInfo.length > 0 ? extraInfo.join(', ') : '-';
+            
             const price = order.payment?.price || 0;
             const orderDate = order.payment?.paidAt || order.createdAt;
             
@@ -319,7 +370,8 @@ function exportToExcel() {
                 quantity,
                 amount,
                 email,
-                phone
+                phone,
+                `"${extraInfoText.replace(/"/g, '""')}"`
             ].join(',');
             
             csvContent += row + '\n';
