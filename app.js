@@ -46,10 +46,18 @@ async function fetchAllOrders() {
         filteredOrders = [...allOrders];
         
         populateProductFilter();
-        updateStatistics();
-        // Rebuild table headers with dynamic fields
-        buildTableHeaders();
-        displayOrders();
+        
+        // Apply saved filter after populating the dropdown
+        const savedFilter = localStorage.getItem('selectedEvent');
+        if (savedFilter) {
+            // Trigger filtering with the saved value
+            filterOrders();
+        } else {
+            updateStatistics();
+            // Rebuild table headers with dynamic fields
+            buildTableHeaders();
+            displayOrders();
+        }
         
         console.log('Orders loaded and displayed successfully');
         
@@ -149,6 +157,12 @@ function populateProductFilter() {
             option.textContent = product;
             productFilter.appendChild(option);
         });
+        
+        // Restore saved filter value from localStorage
+        const savedFilter = localStorage.getItem('selectedEvent');
+        if (savedFilter && Array.from(productSet).includes(savedFilter)) {
+            productFilter.value = savedFilter;
+        }
         
         console.log('Product filter populated with', productSet.size, 'products');
     } catch (error) {
@@ -365,6 +379,9 @@ function filterOrders() {
     try {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const productFilter = document.getElementById('productFilter').value;
+        
+        // Save the selected event to localStorage
+        localStorage.setItem('selectedEvent', productFilter);
         
         console.log('Filtering with search:', searchTerm, 'product:', productFilter);
         
