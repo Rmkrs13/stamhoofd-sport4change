@@ -70,11 +70,11 @@ function extractUniqueFields() {
         // Check order-level field answers
         if (order.data?.fieldAnswers && Array.isArray(order.data.fieldAnswers)) {
             order.data.fieldAnswers.forEach(fieldAnswer => {
-                if (fieldAnswer.field?.id && fieldAnswer.field?.name) {
-                    const fieldId = fieldAnswer.field.id;
+                if (fieldAnswer.field?.name) {
                     const fieldName = fieldAnswer.field.name;
-                    if (!uniqueFields.has(fieldId)) {
-                        uniqueFields.set(fieldId, fieldName);
+                    // Use field name as key so same questions share columns
+                    if (!uniqueFields.has(fieldName)) {
+                        uniqueFields.set(fieldName, fieldName);
                     }
                 }
             });
@@ -85,11 +85,11 @@ function extractUniqueFields() {
             order.data.cart.items.forEach(item => {
                 if (item.fieldAnswers && Array.isArray(item.fieldAnswers)) {
                     item.fieldAnswers.forEach(fieldAnswer => {
-                        if (fieldAnswer.field?.id && fieldAnswer.field?.name) {
-                            const fieldId = fieldAnswer.field.id;
+                        if (fieldAnswer.field?.name) {
                             const fieldName = fieldAnswer.field.name;
-                            if (!uniqueFields.has(fieldId)) {
-                                uniqueFields.set(fieldId, fieldName);
+                            // Use field name as key so same questions share columns
+                            if (!uniqueFields.has(fieldName)) {
+                                uniqueFields.set(fieldName, fieldName);
                             }
                         }
                     });
@@ -98,7 +98,7 @@ function extractUniqueFields() {
         }
     });
     
-    console.log('Unique fields found:', Array.from(uniqueFields.entries()));
+    console.log('Unique field names found:', Array.from(uniqueFields.keys()));
 }
 
 // Build table headers dynamically
@@ -275,18 +275,24 @@ function displayOrders() {
         const fieldValues = new Map();
         
         // Initialize all fields with '-'
-        uniqueFields.forEach((displayName, fieldId) => {
-            fieldValues.set(fieldId, '-');
+        uniqueFields.forEach((displayName, fieldName) => {
+            fieldValues.set(fieldName, '-');
         });
         
         // Check for field answers at order level
         if (order.data?.fieldAnswers && Array.isArray(order.data.fieldAnswers)) {
             order.data.fieldAnswers.forEach(fieldAnswer => {
-                if (fieldAnswer.field?.id && fieldAnswer.answer !== undefined) {
-                    const fieldId = fieldAnswer.field.id;
+                if (fieldAnswer.field?.name && fieldAnswer.answer !== undefined) {
+                    const fieldName = fieldAnswer.field.name;
                     const extracted = extractValue(fieldAnswer.answer);
-                    if (extracted && uniqueFields.has(fieldId)) {
-                        fieldValues.set(fieldId, extracted);
+                    if (extracted && uniqueFields.has(fieldName)) {
+                        // If multiple answers for same field name, concatenate
+                        const existing = fieldValues.get(fieldName);
+                        if (existing && existing !== '-') {
+                            fieldValues.set(fieldName, `${existing}, ${extracted}`);
+                        } else {
+                            fieldValues.set(fieldName, extracted);
+                        }
                     }
                 }
             });
@@ -297,16 +303,16 @@ function displayOrders() {
             order.data.cart.items.forEach(item => {
                 if (item.fieldAnswers && Array.isArray(item.fieldAnswers)) {
                     item.fieldAnswers.forEach(fieldAnswer => {
-                        if (fieldAnswer.field?.id && fieldAnswer.answer !== undefined) {
-                            const fieldId = fieldAnswer.field.id;
+                        if (fieldAnswer.field?.name && fieldAnswer.answer !== undefined) {
+                            const fieldName = fieldAnswer.field.name;
                             const extracted = extractValue(fieldAnswer.answer);
-                            if (extracted && uniqueFields.has(fieldId)) {
+                            if (extracted && uniqueFields.has(fieldName)) {
                                 // If multiple items have the same field, concatenate values
-                                const existing = fieldValues.get(fieldId);
+                                const existing = fieldValues.get(fieldName);
                                 if (existing && existing !== '-') {
-                                    fieldValues.set(fieldId, `${existing}, ${extracted}`);
+                                    fieldValues.set(fieldName, `${existing}, ${extracted}`);
                                 } else {
-                                    fieldValues.set(fieldId, extracted);
+                                    fieldValues.set(fieldName, extracted);
                                 }
                             }
                         }
@@ -480,18 +486,23 @@ function exportToExcel() {
             const fieldValues = new Map();
             
             // Initialize all fields with '-'
-            uniqueFields.forEach((displayName, fieldId) => {
-                fieldValues.set(fieldId, '-');
+            uniqueFields.forEach((displayName, fieldName) => {
+                fieldValues.set(fieldName, '-');
             });
             
             // Extract field values from order level
             if (order.data?.fieldAnswers && Array.isArray(order.data.fieldAnswers)) {
                 order.data.fieldAnswers.forEach(fieldAnswer => {
-                    if (fieldAnswer.field?.id && fieldAnswer.answer !== undefined) {
-                        const fieldId = fieldAnswer.field.id;
+                    if (fieldAnswer.field?.name && fieldAnswer.answer !== undefined) {
+                        const fieldName = fieldAnswer.field.name;
                         const extracted = extractValue(fieldAnswer.answer);
-                        if (extracted && uniqueFields.has(fieldId)) {
-                            fieldValues.set(fieldId, extracted);
+                        if (extracted && uniqueFields.has(fieldName)) {
+                            const existing = fieldValues.get(fieldName);
+                            if (existing && existing !== '-') {
+                                fieldValues.set(fieldName, `${existing}, ${extracted}`);
+                            } else {
+                                fieldValues.set(fieldName, extracted);
+                            }
                         }
                     }
                 });
@@ -502,15 +513,15 @@ function exportToExcel() {
                 order.data.cart.items.forEach(item => {
                     if (item.fieldAnswers && Array.isArray(item.fieldAnswers)) {
                         item.fieldAnswers.forEach(fieldAnswer => {
-                            if (fieldAnswer.field?.id && fieldAnswer.answer !== undefined) {
-                                const fieldId = fieldAnswer.field.id;
+                            if (fieldAnswer.field?.name && fieldAnswer.answer !== undefined) {
+                                const fieldName = fieldAnswer.field.name;
                                 const extracted = extractValue(fieldAnswer.answer);
-                                if (extracted && uniqueFields.has(fieldId)) {
-                                    const existing = fieldValues.get(fieldId);
+                                if (extracted && uniqueFields.has(fieldName)) {
+                                    const existing = fieldValues.get(fieldName);
                                     if (existing && existing !== '-') {
-                                        fieldValues.set(fieldId, `${existing}, ${extracted}`);
+                                        fieldValues.set(fieldName, `${existing}, ${extracted}`);
                                     } else {
-                                        fieldValues.set(fieldId, extracted);
+                                        fieldValues.set(fieldName, extracted);
                                     }
                                 }
                             }
