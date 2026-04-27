@@ -175,7 +175,7 @@ function populateProductFilter() {
         console.log('Unique products found:', Array.from(productSet));
         
         const productFilter = document.getElementById('productFilter');
-        productFilter.innerHTML = '<option value="">Alle Evenementen</option>';
+        productFilter.innerHTML = '<option value="">Alle evenementen</option>';
         
         Array.from(productSet).sort().forEach(product => {
             const option = document.createElement('option');
