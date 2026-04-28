@@ -83,6 +83,10 @@ function processOrderData(data) {
         // Trigger filtering with the saved value
         filterOrders();
     } else {
+        // Hide export button initially when no event is selected
+        const exportBtn = document.getElementById('exportBtn');
+        exportBtn.style.display = 'none';
+        
         updateStatistics();
         // Rebuild table headers with dynamic fields
         buildTableHeaders();
@@ -481,6 +485,14 @@ function filterOrders() {
         
         // Save the selected event to localStorage
         localStorage.setItem('selectedEvent', productFilter);
+        
+        // Show/hide export button based on whether an event is selected
+        const exportBtn = document.getElementById('exportBtn');
+        if (productFilter) {
+            exportBtn.style.display = 'block';
+        } else {
+            exportBtn.style.display = 'none';
+        }
         
         console.log('Filtering with search:', searchTerm, 'product:', productFilter);
         
