@@ -30,6 +30,7 @@ header {
 .header-content {
     display: flex;
     align-items: center;
+    justify-content: center;
     max-width: 1600px;
     margin: 0 auto;
     position: relative;
@@ -38,11 +39,11 @@ header {
 .logo {
     width: 80px;
     height: 80px;
-    margin-right: 20px;
+    position: absolute;
+    left: 0;
 }
 
 .header-text {
-    flex: 1;
     text-align: center;
 }
 
@@ -74,6 +75,10 @@ header h2 {
     padding: 15px;
     text-align: center;
     border: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .stat-value {
@@ -81,6 +86,7 @@ header h2 {
     font-weight: 600;
     color: #333;
     margin-bottom: 5px;
+    text-align: center;
 }
 
 .stat-label {
@@ -88,6 +94,7 @@ header h2 {
     font-size: 0.9em;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-align: center;
 }
 
 .filters {
@@ -270,19 +277,17 @@ td a:hover {
     }
     
     .header-content {
-        flex-wrap: wrap;
-        gap: 10px;
+        padding: 0 60px; /* Space for logo and logout button */
     }
     
     .logo {
         width: 50px;
         height: 50px;
-        margin-right: 10px;
+        left: 10px;
     }
     
     .header-text {
-        flex: 1;
-        text-align: left;
+        text-align: center;
     }
     
     header h1 {
@@ -295,8 +300,7 @@ td a:hover {
     }
     
     .logout-btn {
-        position: static;
-        margin-left: auto;
+        right: 10px;
         padding: 6px 12px;
         font-size: 12px;
     }
