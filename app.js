@@ -1,6 +1,7 @@
 let allOrders = [];
 let filteredOrders = [];
 let uniqueFields = new Map(); // Map to store unique field names and their display names
+let eventFields = new Map(); // Map to track which fields belong to which events
 
 // Check authentication and show content
 async function verifyAuthAndInit() {
@@ -99,8 +100,32 @@ function processOrderData(data) {
 // Extract all unique field names from all orders
 function extractUniqueFields() {
     uniqueFields.clear();
+    eventFields.clear();
+    
+    // First, ensure all events are registered (even if they have no fields)
+    allOrders.forEach(order => {
+        if (order.data?.cart?.items) {
+            order.data.cart.items.forEach(item => {
+                if (item.product?.name) {
+                    if (!eventFields.has(item.product.name)) {
+                        eventFields.set(item.product.name, new Set());
+                    }
+                }
+            });
+        }
+    });
     
     allOrders.forEach(order => {
+        // Get event names for this order
+        const eventNames = new Set();
+        if (order.data?.cart?.items) {
+            order.data.cart.items.forEach(item => {
+                if (item.product?.name) {
+                    eventNames.add(item.product.name);
+                }
+            });
+        }
+        
         // Check order-level field answers
         if (order.data?.fieldAnswers && Array.isArray(order.data.fieldAnswers)) {
             order.data.fieldAnswers.forEach(fieldAnswer => {
@@ -110,6 +135,13 @@ function extractUniqueFields() {
                     if (!uniqueFields.has(fieldName)) {
                         uniqueFields.set(fieldName, fieldName);
                     }
+                    
+                    // Track which events have this field
+                    eventNames.forEach(eventName => {
+                        if (eventFields.has(eventName)) {
+                            eventFields.get(eventName).add(fieldName);
+                        }
+                    });
                 }
             });
         }
@@ -117,6 +149,7 @@ function extractUniqueFields() {
         // Check item-level field answers
         if (order.data?.cart?.items) {
             order.data.cart.items.forEach(item => {
+                const itemEventName = item.product?.name;
                 if (item.fieldAnswers && Array.isArray(item.fieldAnswers)) {
                     item.fieldAnswers.forEach(fieldAnswer => {
                         if (fieldAnswer.field?.name) {
@@ -124,6 +157,11 @@ function extractUniqueFields() {
                             // Use field name as key so same questions share columns
                             if (!uniqueFields.has(fieldName)) {
                                 uniqueFields.set(fieldName, fieldName);
+                            }
+                            
+                            // Track which events have this field
+                            if (itemEventName && eventFields.has(itemEventName)) {
+                                eventFields.get(itemEventName).add(fieldName);
                             }
                         }
                     });
@@ -133,6 +171,9 @@ function extractUniqueFields() {
     });
     
     console.log('Unique field names found:', Array.from(uniqueFields.keys()));
+    console.log('Event fields mapping:', Array.from(eventFields.entries()).map(([event, fields]) => 
+        ({ event, fields: Array.from(fields) })
+    ));
 }
 
 // Build table headers dynamically
@@ -150,11 +191,28 @@ function buildTableHeaders() {
         thead.appendChild(th);
     });
     
-    // Add dynamic field columns
+    // Get selected event filter
+    const selectedEvent = document.getElementById('productFilter').value;
+    
+    // Determine which fields to show
+    let fieldsToShow = new Set();
+    if (selectedEvent && eventFields.has(selectedEvent)) {
+        // Show only fields for the selected event
+        fieldsToShow = eventFields.get(selectedEvent);
+    } else {
+        // Show all fields when no filter or "Alle evenementen" is selected
+        uniqueFields.forEach((displayName, fieldKey) => {
+            fieldsToShow.add(fieldKey);
+        });
+    }
+    
+    // Add dynamic field columns for visible fields only
     uniqueFields.forEach((displayName, fieldKey) => {
-        const th = document.createElement('th');
-        th.textContent = displayName;
-        thead.appendChild(th);
+        if (fieldsToShow.has(fieldKey)) {
+            const th = document.createElement('th');
+            th.textContent = displayName;
+            thead.appendChild(th);
+        }
     });
 }
 
@@ -259,8 +317,21 @@ function displayOrders() {
         
         console.log('Displaying', filteredOrders.length, 'orders');
         
+        // Get selected event filter
+        const selectedEvent = document.getElementById('productFilter').value;
+        
+        // Determine which fields to show
+        let fieldsToShow = new Set();
+        if (selectedEvent && eventFields.has(selectedEvent)) {
+            fieldsToShow = eventFields.get(selectedEvent);
+        } else {
+            uniqueFields.forEach((displayName, fieldKey) => {
+                fieldsToShow.add(fieldKey);
+            });
+        }
+        
         if (filteredOrders.length === 0) {
-            const colspan = 6 + uniqueFields.size; // Static columns + dynamic field columns (removed Aantal)
+            const colspan = 6 + fieldsToShow.size; // Static columns + visible dynamic field columns
             tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data">Geen bestellingen gevonden</td></tr>`;
             console.log('No orders to display');
             return;
@@ -381,10 +452,12 @@ function displayOrders() {
             <td>${phoneLink}</td>
         `;
         
-        // Add dynamic field columns in the same order as headers
+        // Add dynamic field columns in the same order as headers (only visible fields)
         uniqueFields.forEach((displayName, fieldKey) => {
-            const value = fieldValues.get(fieldKey) || '-';
-            rowHTML += `<td title="${value.replace(/"/g, '&quot;')}">${value}</td>`;
+            if (fieldsToShow.has(fieldKey)) {
+                const value = fieldValues.get(fieldKey) || '-';
+                rowHTML += `<td title="${value.replace(/"/g, '&quot;')}">${value}</td>`;
+            }
         });
         
         row.innerHTML = rowHTML;
@@ -475,12 +548,27 @@ function exportToExcel() {
     try {
         console.log('Starting Excel export...');
         
+        // Get selected event filter
+        const selectedEvent = document.getElementById('productFilter').value;
+        
+        // Determine which fields to show
+        let fieldsToShow = new Set();
+        if (selectedEvent && eventFields.has(selectedEvent)) {
+            fieldsToShow = eventFields.get(selectedEvent);
+        } else {
+            uniqueFields.forEach((displayName, fieldKey) => {
+                fieldsToShow.add(fieldKey);
+            });
+        }
+        
         // Create CSV header with static columns (Bedrag as 3rd column)
         let headers = ['Datum', 'Evenement', 'Bedrag', 'Naam', 'E-mail', 'Telefoon'];
         
-        // Add dynamic field columns with their names
+        // Add dynamic field columns with their names (only visible fields)
         uniqueFields.forEach((displayName, fieldName) => {
-            headers.push(fieldName);
+            if (fieldsToShow.has(fieldName)) {
+                headers.push(fieldName);
+            }
         });
         
         let csvContent = headers.map(h => `"${h}"`).join(',') + '\n';
@@ -589,10 +677,12 @@ function exportToExcel() {
                 `"${phone}"`
             ];
             
-            // Add dynamic field values
+            // Add dynamic field values (only for visible fields)
             uniqueFields.forEach((displayName, fieldKey) => {
-                const value = fieldValues.get(fieldKey) || '-';
-                rowData.push(`"${value.replace(/"/g, '""')}"`);
+                if (fieldsToShow.has(fieldKey)) {
+                    const value = fieldValues.get(fieldKey) || '-';
+                    rowData.push(`"${value.replace(/"/g, '""')}"`);
+                }
             });
             
             csvContent += rowData.join(',') + '\n';
