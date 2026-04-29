@@ -19,6 +19,22 @@ async function verifyAuthAndInit() {
     loadingEl.style.display = 'block';
     loadingEl.textContent = 'Bestellingen laden...';
     
+    // Set correct button visibility based on saved filter
+    const savedEvent = localStorage.getItem('selectedEvent');
+    const exportBtn = document.getElementById('exportBtn');
+    const statsBtn = document.getElementById('statsBtn');
+    
+    if (savedEvent) {
+        // Event is selected - show export button
+        exportBtn.style.display = 'block';
+        statsBtn.style.display = 'none';
+    } else {
+        // All events - show disabled stats button
+        exportBtn.style.display = 'none';
+        statsBtn.style.display = 'block';
+        statsBtn.disabled = true;
+    }
+    
     // Verify with API call and load data
     try {
         const response = await fetch('/api/orders', {
