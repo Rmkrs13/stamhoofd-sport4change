@@ -26,11 +26,11 @@
         <div class="stats-container">
             <div class="stat-card">
                 <div class="stat-value" id="totalOrders">0</div>
-                <div class="stat-label">Totaal Tickets</div>
+                <div class="stat-label">Totaal tickets</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="totalRevenue">€0</div>
-                <div class="stat-label">Totale Omzet</div>
+                <div class="stat-label">Totale omzet</div>
             </div>
         </div>
 
@@ -42,6 +42,7 @@
             <select id="productFilter">
                 <option value="">Alle evenementen</option>
             </select>
+            <button id="statsBtn" class="stats-btn" disabled>Statistieken</button>
             <button id="exportBtn" class="export-btn">Exporteer</button>
         </div>
 
@@ -61,6 +62,39 @@
 
     </div>
 
+    <!-- Statistics Modal -->
+    <div id="statsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Statistieken - Alle evenementen</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="stats-grid">
+                    <div class="chart-container">
+                        <h3>Tickets per evenement</h3>
+                        <canvas id="ticketsChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Omzet verdeling</h3>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                <div class="rankings-grid">
+                    <div class="ranking-list">
+                        <h3>Alle evenementen - Aantal tickets</h3>
+                        <ol id="ticketsRanking"></ol>
+                    </div>
+                    <div class="ranking-list">
+                        <h3>Alle evenementen - Totale omzet</h3>
+                        <ol id="revenueRanking"></ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

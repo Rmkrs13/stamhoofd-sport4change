@@ -98,6 +98,12 @@ function processOrderData(data) {
     // Hide loading
     const loadingEl = document.getElementById('loading');
     loadingEl.style.display = 'none';
+    
+    // Enable statistics button after data is loaded
+    const statsBtn = document.getElementById('statsBtn');
+    if (statsBtn && !localStorage.getItem('selectedEvent')) {
+        statsBtn.disabled = false;
+    }
 }
 
 
@@ -486,12 +492,16 @@ function filterOrders() {
         // Save the selected event to localStorage
         localStorage.setItem('selectedEvent', productFilter);
         
-        // Show/hide export button based on whether an event is selected
+        // Show/hide buttons based on whether an event is selected
         const exportBtn = document.getElementById('exportBtn');
+        const statsBtn = document.getElementById('statsBtn');
         if (productFilter) {
             exportBtn.style.display = 'block';
+            statsBtn.style.display = 'none';
         } else {
             exportBtn.style.display = 'none';
+            statsBtn.style.display = 'block';
+            statsBtn.disabled = false; // Enable when "Alle evenementen" is selected
         }
         
         console.log('Filtering with search:', searchTerm, 'product:', productFilter);
@@ -728,6 +738,211 @@ function exportToExcel() {
     }
 }
 
+// Statistics functions
+let ticketsChart = null;
+let revenueChart = null;
+let chartsInitialized = false;
+
+function calculateEventStatistics() {
+    const stats = new Map();
+    
+    allOrders.forEach(order => {
+        if (order.data?.cart?.items) {
+            order.data.cart.items.forEach(item => {
+                const eventName = item.product?.name || 'Onbekend';
+                const quantity = item.amount || 1;
+                const price = order.payment?.price || 0;
+                
+                if (!stats.has(eventName)) {
+                    stats.set(eventName, { tickets: 0, revenue: 0 });
+                }
+                
+                const eventStats = stats.get(eventName);
+                eventStats.tickets += quantity;
+                eventStats.revenue += price;
+            });
+        }
+    });
+    
+    return stats;
+}
+
+function showStatisticsModal() {
+    const modal = document.getElementById('statsModal');
+    if (!modal) {
+        console.error('Statistics modal not found');
+        return;
+    }
+    
+    modal.style.display = 'block';
+    
+    // Wait for next frame to ensure modal is visible before creating charts
+    setTimeout(() => {
+        const stats = calculateEventStatistics();
+        
+        // Sort by tickets and revenue
+        const sortedByTickets = Array.from(stats.entries())
+            .sort((a, b) => b[1].tickets - a[1].tickets);
+        
+        const sortedByRevenue = Array.from(stats.entries())
+            .sort((a, b) => b[1].revenue - a[1].revenue);
+        
+        // Update rankings
+        updateRankings(sortedByTickets, sortedByRevenue);
+        
+        // Create charts
+        createCharts(sortedByTickets);
+        chartsInitialized = true;
+    }, 100);
+}
+
+function updateRankings(sortedByTickets, sortedByRevenue) {
+    const ticketsRanking = document.getElementById('ticketsRanking');
+    const revenueRanking = document.getElementById('revenueRanking');
+    
+    // Tickets ranking - show all events
+    ticketsRanking.innerHTML = sortedByTickets
+        .map(([event, stats]) => 
+            `<li><strong>${event}</strong>: ${stats.tickets} ${stats.tickets === 1 ? 'ticket' : 'tickets'}</li>`
+        ).join('');
+    
+    // Revenue ranking - show all events
+    revenueRanking.innerHTML = sortedByRevenue
+        .map(([event, stats]) => 
+            `<li><strong>${event}</strong>: ${formatCurrency(stats.revenue)}</li>`
+        ).join('');
+}
+
+function createCharts(sortedData) {
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded yet');
+        return;
+    }
+    
+    const labels = sortedData.map(([event]) => event);
+    const ticketsData = sortedData.map(([, stats]) => stats.tickets);
+    const revenueData = sortedData.map(([, stats]) => stats.revenue / 100); // Convert to euros
+    
+    // Generate colors for each event
+    const colors = generateColors(labels.length);
+    
+    // Destroy existing charts if they exist
+    if (ticketsChart) ticketsChart.destroy();
+    if (revenueChart) revenueChart.destroy();
+    
+    // Tickets chart - keep as bar chart
+    const ticketsCtx = document.getElementById('ticketsChart');
+    if (!ticketsCtx) {
+        console.error('ticketsChart canvas not found');
+        return;
+    }
+    const ticketsContext = ticketsCtx.getContext('2d');
+    ticketsChart = new Chart(ticketsContext, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Aantal Tickets',
+                data: ticketsData,
+                backgroundColor: colors,
+                borderColor: colors.map(color => darkenColor(color)),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+    
+    // Revenue chart - pie chart
+    const revenueCtx = document.getElementById('revenueChart');
+    if (!revenueCtx) {
+        console.error('revenueChart canvas not found');
+        return;
+    }
+    const revenueContext = revenueCtx.getContext('2d');
+    revenueChart = new Chart(revenueContext, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Omzet (€)',
+                data: revenueData,
+                backgroundColor: colors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: €${value.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                },
+                legend: {
+                    position: 'right',
+                    labels: {
+                        padding: 10,
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Generate distinct colors for charts
+function generateColors(count) {
+    const colors = [
+        '#fa6432', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0',
+        '#00BCD4', '#CDDC39', '#FFC107', '#795548', '#607D8B',
+        '#E91E63', '#3F51B5', '#009688', '#8BC34A', '#FF5722',
+        '#673AB7', '#03A9F4', '#FFEB3B', '#9E9E9E', '#FF6B6B'
+    ];
+    
+    // If we need more colors than predefined, generate them
+    while (colors.length < count) {
+        const hue = (colors.length * 137.5) % 360; // Golden angle for distribution
+        colors.push(`hsl(${hue}, 70%, 55%)`);
+    }
+    
+    return colors.slice(0, count);
+}
+
+// Darken a color for borders
+function darkenColor(color) {
+    if (color.startsWith('#')) {
+        // Hex color
+        const num = parseInt(color.slice(1), 16);
+        const r = Math.max(0, (num >> 16) - 30);
+        const g = Math.max(0, ((num >> 8) & 0x00FF) - 30);
+        const b = Math.max(0, (num & 0x0000FF) - 30);
+        return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+    }
+    return color; // Return as-is for HSL colors
+}
+
 // Function to handle search input changes
 function handleSearchInput() {
     const searchInput = document.getElementById('searchInput');
@@ -759,12 +974,28 @@ try {
     document.getElementById('clearSearch').addEventListener('click', clearSearch);
     document.getElementById('productFilter').addEventListener('change', filterOrders);
     document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+    document.getElementById('statsBtn').addEventListener('click', showStatisticsModal);
     document.getElementById('logoutBtn').addEventListener('click', () => {
         localStorage.removeItem('sessionToken');
         localStorage.removeItem('authPassword');
         localStorage.removeItem('selectedEvent');
         window.location.href = '/login';
     });
+    
+    // Modal close functionality
+    const modal = document.getElementById('statsModal');
+    const closeBtn = modal.querySelector('.close');
+    
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    
+    window.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+    
     console.log('Event listeners attached successfully');
 } catch (error) {
     console.error('Error attaching event listeners:', error);
