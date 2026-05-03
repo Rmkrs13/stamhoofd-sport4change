@@ -2,6 +2,7 @@ let allOrders = [];
 let filteredOrders = [];
 let uniqueFields = new Map(); // Map to store unique field names and their display names
 let eventFields = new Map(); // Map to track which fields belong to which events
+let hasTariffData = false; // Track if any order has tariff information
 
 // Check authentication and show content
 async function verifyAuthAndInit() {
@@ -123,6 +124,26 @@ function processOrderData(data) {
 }
 
 
+// Check if any orders have tariff data
+function checkForTariffData(orders) {
+    for (const order of orders) {
+        if (order.data?.cart?.items) {
+            for (const item of order.data.cart.items) {
+                if (item.productPrice?.name || 
+                    item.price?.name || 
+                    item.priceConfig?.name || 
+                    item.seat?.name || 
+                    item.option?.name ||
+                    item.productPrice?.description ||
+                    item.price?.description) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 // Extract all unique field names from all orders
 function extractUniqueFields() {
     uniqueFields.clear();
@@ -209,13 +230,23 @@ function buildTableHeaders() {
     // Clear existing headers
     thead.innerHTML = '';
     
-    // Add static columns
+    // Check if current filtered orders have tariff data
+    hasTariffData = checkForTariffData(filteredOrders);
+    
+    // Add static columns first (without Tarief)
     const staticHeaders = ['Datum', 'Evenement', 'Bedrag', 'Naam', 'E-mail', 'Telefoon'];
     staticHeaders.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header;
         thead.appendChild(th);
     });
+    
+    // Add Tarief column if data exists (after basic columns, before dynamic fields)
+    if (hasTariffData) {
+        const th = document.createElement('th');
+        th.textContent = 'Tarief';
+        thead.appendChild(th);
+    }
     
     // Get selected event filter
     const selectedEvent = document.getElementById('productFilter').value;
@@ -357,7 +388,7 @@ function displayOrders() {
         }
         
         if (filteredOrders.length === 0) {
-            const colspan = 6 + fieldsToShow.size; // Static columns + visible dynamic field columns
+            const colspan = (hasTariffData ? 7 : 6) + fieldsToShow.size; // Static columns + visible dynamic field columns
             tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data">Geen bestellingen gevonden</td></tr>`;
             console.log('No orders to display');
             return;
@@ -369,13 +400,40 @@ function displayOrders() {
         
         let productInfo = '-';
         let quantity = 0;
+        let tariffInfo = '-';
         
         if (order.data && order.data.cart && order.data.cart.items) {
-            const products = order.data.cart.items.map(item => {
+            const products = [];
+            const tariffs = [];
+            
+            order.data.cart.items.forEach(item => {
                 quantity += item.amount || 0;
-                return item.product?.name || 'Onbekend product';
+                products.push(item.product?.name || 'Onbekend product');
+                
+                // Extract tariff information from various possible locations
+                let tariff = '-';
+                if (item.productPrice?.name) {
+                    tariff = item.productPrice.name;
+                } else if (item.price?.name) {
+                    tariff = item.price.name;
+                } else if (item.priceConfig?.name) {
+                    tariff = item.priceConfig.name;
+                } else if (item.seat?.name) {
+                    tariff = item.seat.name;
+                } else if (item.option?.name) {
+                    tariff = item.option.name;
+                } else if (item.productPrice?.description) {
+                    tariff = item.productPrice.description;
+                } else if (item.price?.description) {
+                    tariff = item.price.description;
+                }
+                
+                
+                tariffs.push(tariff);
             });
+            
             productInfo = products.join(', ');
+            tariffInfo = tariffs.filter(t => t !== '-').join(', ') || '-';
         }
         
         // Extract customer info
@@ -468,7 +526,7 @@ function displayOrders() {
         const cleanPhone = phone.replace(/[^\d+]/g, '');
         const phoneLink = phone !== '-' && cleanPhone ? `<a href="tel:${cleanPhone}">${phone}</a>` : phone;
         
-        // Build row HTML with static columns first (bedrag as 3rd column)
+        // Build row HTML with static columns first (without Tarief)
         let rowHTML = `
             <td>${formatDate(orderDate)}</td>
             <td>${productInfo}</td>
@@ -477,6 +535,11 @@ function displayOrders() {
             <td>${emailLink}</td>
             <td>${phoneLink}</td>
         `;
+        
+        // Add Tarief column if it exists (after basic columns, before dynamic fields)
+        if (hasTariffData) {
+            rowHTML += `<td>${tariffInfo}</td>`;
+        }
         
         // Add dynamic field columns in the same order as headers (only visible fields)
         uniqueFields.forEach((displayName, fieldKey) => {
@@ -589,6 +652,9 @@ function exportToExcel() {
         // Get selected event filter
         const selectedEvent = document.getElementById('productFilter').value;
         
+        // Check if filtered orders have tariff data
+        const exportHasTariff = checkForTariffData(filteredOrders);
+        
         // Determine which fields to show
         let fieldsToShow = new Set();
         if (selectedEvent && eventFields.has(selectedEvent)) {
@@ -599,8 +665,13 @@ function exportToExcel() {
             });
         }
         
-        // Create CSV header with static columns (Bedrag as 3rd column)
+        // Create CSV header with static columns first
         let headers = ['Datum', 'Evenement', 'Bedrag', 'Naam', 'E-mail', 'Telefoon'];
+        
+        // Add Tarief header if needed (after basic headers, before dynamic fields)
+        if (exportHasTariff) {
+            headers.push('Tarief');
+        }
         
         // Add dynamic field columns with their names (only visible fields)
         uniqueFields.forEach((displayName, fieldName) => {
@@ -615,13 +686,39 @@ function exportToExcel() {
             // Extract data
             let productInfo = '-';
             let quantity = 0;
+            let tariffInfo = '-';
             
             if (order.data && order.data.cart && order.data.cart.items) {
-                const products = order.data.cart.items.map(item => {
+                const products = [];
+                const tariffs = [];
+                
+                order.data.cart.items.forEach(item => {
                     quantity += item.amount || 0;
-                    return item.product?.name || 'Onbekend product';
+                    products.push(item.product?.name || 'Onbekend product');
+                    
+                    // Extract tariff information from various possible locations
+                    let tariff = '-';
+                    if (item.productPrice?.name) {
+                        tariff = item.productPrice.name;
+                    } else if (item.price?.name) {
+                        tariff = item.price.name;
+                    } else if (item.priceConfig?.name) {
+                        tariff = item.priceConfig.name;
+                    } else if (item.seat?.name) {
+                        tariff = item.seat.name;
+                    } else if (item.option?.name) {
+                        tariff = item.option.name;
+                    } else if (item.productPrice?.description) {
+                        tariff = item.productPrice.description;
+                    } else if (item.price?.description) {
+                        tariff = item.price.description;
+                    }
+                    
+                    tariffs.push(tariff);
                 });
+                
                 productInfo = products.join(', ');
+                tariffInfo = tariffs.filter(t => t !== '-').join(', ') || '-';
             }
             
             const customer = order.data?.customer || {};
@@ -705,7 +802,7 @@ function exportToExcel() {
             const date = orderDate ? new Date(orderDate).toLocaleString('nl-NL') : '-';
             const amount = formatCurrency(price);
             
-            // Build CSV row with static columns - all fields need quotes (Bedrag as 3rd column)
+            // Build CSV row with static columns - all fields need quotes
             const rowData = [
                 `"${date}"`,
                 `"${productInfo.replace(/"/g, '""')}"`,
@@ -714,6 +811,11 @@ function exportToExcel() {
                 `"${email}"`,
                 `"${phone}"`
             ];
+            
+            // Add Tarief data if needed (after basic data, before dynamic fields)
+            if (exportHasTariff) {
+                rowData.push(`"${tariffInfo.replace(/"/g, '""')}"`);
+            }
             
             // Add dynamic field values (only for visible fields)
             uniqueFields.forEach((displayName, fieldKey) => {
